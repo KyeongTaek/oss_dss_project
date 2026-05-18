@@ -1,0 +1,28 @@
+# === Backend (Python / FastAPI) ===
+backend/__pycache__/
+backend/*.pyc
+backend/venv/
+backend/.venv/
+
+# 환경변수 및 설정파일(MySQL 비밀번호 등 비밀 데이터)
+backend/.env
+backend/config.json
+backend/secret_key.txt
+
+# Nginx나 가상환경 로그 파일
+*.log
+
+
+# === Android ===
+android/.gradle/
+android/local.properties
+android/.ideas/
+android/app/build/
+android/.cxx/
+android/*.imi
+
+
+# === OS/IDE 임시 파일 ===
+.DS_Store
+Thumbs.db
+.vscode/
