@@ -1,3 +1,6 @@
+import java.io.File
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
 }
@@ -10,6 +13,18 @@ android {
         }
     }
 
+    val properties = Properties()
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        properties.load(localPropertiesFile.inputStream())
+    }
+    val myApiKey = properties.getProperty("API_KEY") ?: ""
+
+    buildFeatures {
+        buildConfig = true
+    }
+
+
     defaultConfig {
         applicationId = "com.example.finalblescanner"
         minSdk = 24
@@ -18,6 +33,10 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Manifest에서 사용할 경우 <meta-data>에 전달할 플레이스홀더 설정
+        manifestPlaceholders["API_KEY"] = myApiKey
+        buildConfigField("String", "API_KEY", "${myApiKey}")
     }
 
     buildTypes {
@@ -43,4 +62,5 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    implementation("com.kakao.maps.open:android:2.13.2")
 }
