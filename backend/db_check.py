@@ -8,45 +8,65 @@ from tortoise import Tortoise, connections
 load_dotenv()
 
 
-def build_db_url() -> str:
-    db_host = os.getenv("DB_HOST")
-    db_port = os.getenv("DB_PORT", "3306")
-    db_user = os.getenv("DB_USER")
-    db_password = os.getenv("DB_PASSWORD")
-    db_name = os.getenv("DB_NAME")
+def get_required_env(name: str) -> str:
+    value = os.getenv(name)
 
-    missing = [
-        name
-        for name, value in {
-            "DB_HOST": db_host,
-            "DB_USER": db_user,
-            "DB_PASSWORD": db_password,
-            "DB_NAME": db_name,
-        }.items()
-        if not value
-    ]
+    if value is None or value.strip() == "":
+        raise RuntimeError(f"Missing DB environment variable: {name}")
 
-    if missing:
-        raise RuntimeError(f"Missing DB environment variables: {', '.join(missing)}")
+    return value
 
-    return f"mysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+
+def build_tortoise_config() -> dict:
+    db_host = get_required_env("DB_HOST")
+    db_port = int(os.getenv("DB_PORT", "3306"))
+    db_user = get_required_env("DB_USER")
+    db_password = get_required_env("DB_PASSWORD")
+    db_name = get_required_env("DB_NAME")
+
+    return {
+        "connections": {
+            "default": {
+                "engine": "tortoise.backends.mysql",
+                "credentials": {
+                    "host": db_host,
+                    "port": db_port,
+                    "user": db_user,
+                    "password": db_password,
+                    "database": db_name,
+                    "charset": "utf8mb4",
+                },
+            }
+        },
+        "apps": {
+            "models": {
+                "models": ["db_models"],
+                "default_connection": "default",
+            }
+        },
+    }
 
 
 async def check_mysql_connection() -> None:
-    db_url = build_db_url()
+    config = build_tortoise_config()
 
-    await Tortoise.init(
-        db_url=db_url,
-        modules={"models": []},
-    )
+    try:
+        await Tortoise.init(config=config)
 
-    connection = connections.get("default")
-    result = await connection.execute_query("SELECT 1")
+        connection = connections.get("default")
 
-    await Tortoise.close_connections()
+        result = await connection.execute_query("SELECT 1 AS connection_test;")
+        tables = await connection.execute_query("SHOW TABLES;")
 
-    print("MySQL connection pool check passed.")
-    print(result)
+        print("MySQL connection pool check passed.")
+        print("SELECT 1 result:")
+        print(result)
+
+        print("\nTables:")
+        print(tables)
+
+    finally:
+        await Tortoise.close_connections()
 
 
 if __name__ == "__main__":
