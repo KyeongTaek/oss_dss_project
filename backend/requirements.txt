@@ -3,3 +3,5 @@ uvicorn[standard]
 tortoise-orm
 aiomysql
 python-dotenv
+httpx
+

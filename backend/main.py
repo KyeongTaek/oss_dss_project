@@ -1,3 +1,4 @@
+from services.sensor_sync import sync_latest_sensor_data
 import os
 from decimal import Decimal
 from typing import Any, Optional
@@ -73,11 +74,13 @@ def health_check():
 
 
 @app.post("/api/campus/refresh")
-def refresh_campus_data():
+async def refresh_campus_data():
+    result = await sync_latest_sensor_data(app.state.mysql_pool)
+
     return {
         "statusCode": 200,
-        "message": "Data received from app successfully!",
-        "data": None,
+        "message": "Data synchronized successfully!",
+        "data": result,
     }
 
 
@@ -131,3 +134,4 @@ async def get_campus_status():
             "buildings": buildings,
         },
     }
+
