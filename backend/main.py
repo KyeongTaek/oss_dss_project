@@ -1,10 +1,66 @@
+import os
+from decimal import Decimal
+from typing import Any, Optional
+
+import aiomysql
+from dotenv import load_dotenv
 from fastapi import FastAPI
+
+
+load_dotenv()
 
 app = FastAPI(
     title="OSS DSS Analysis Server",
-    description="Mock API server for campus operation status",
-    version="0.1.0",
+    description="Campus operation status API server",
+    version="0.2.0",
 )
+
+
+def get_required_env(name: str) -> str:
+    value = os.getenv(name)
+
+    if value is None or value.strip() == "":
+        raise RuntimeError(f"Missing DB environment variable: {name}")
+
+    return value
+
+
+def to_json_value(value: Any) -> Any:
+    if isinstance(value, Decimal):
+        return float(value)
+
+    return value
+
+
+def first_non_null(rows: list[dict], key: str) -> Optional[Any]:
+    for row in rows:
+        value = row.get(key)
+        if value is not None:
+            return to_json_value(value)
+
+    return None
+
+
+@app.on_event("startup")
+async def startup_event():
+    app.state.mysql_pool = await aiomysql.create_pool(
+        host=get_required_env("DB_HOST"),
+        port=int(os.getenv("DB_PORT", "3306")),
+        user=get_required_env("DB_USER"),
+        password=get_required_env("DB_PASSWORD"),
+        db=get_required_env("DB_NAME"),
+        charset="utf8mb4",
+        autocommit=True,
+        minsize=1,
+        maxsize=10,
+    )
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    pool = app.state.mysql_pool
+    pool.close()
+    await pool.wait_closed()
 
 
 @app.get("/health")
@@ -26,42 +82,52 @@ def refresh_campus_data():
 
 
 @app.get("/api/campus/status")
-def get_campus_status():
+async def get_campus_status():
+    query = """
+        SELECT
+            bs.building_name,
+            bs.ext_temp,
+            bs.ext_co2,
+            bs.`Avg_humidity` AS campus_humidity,
+            bs.avg_aqi,
+            bs.operation_status,
+            r.operation_msg AS recommendation_msg
+        FROM building_status bs
+        LEFT JOIN operation_rules r
+            ON bs.rule_code = r.rule_code
+        ORDER BY bs.id;
+    """
+
+    async with app.state.mysql_pool.acquire() as connection:
+        async with connection.cursor(aiomysql.DictCursor) as cursor:
+            await cursor.execute(query)
+            rows = await cursor.fetchall()
+
+    buildings = []
+
+    for row in rows:
+        operating_status = row.get("operation_status")
+
+        buildings.append(
+            {
+                "building_name": row.get("building_name"),
+                "building_ext_temp": to_json_value(row.get("ext_temp")),
+                "building_ext_co2": row.get("ext_co2"),
+                "operating_status": operating_status,
+                "recommendation_msg": (
+                    row.get("recommendation_msg")
+                    if operating_status is not None
+                    else None
+                ),
+            }
+        )
+
     return {
         "statusCode": 200,
         "message": "request success",
         "data": {
-            "campus_humidity": 44.5,
-            "campus_aqi": 2,
-            "buildings": [
-                {
-                    "building_name": "공과대학 4호관",
-                    "building_ext_temp": 26.5,
-                    "building_ext_co2": 480,
-                    "operating_status": "COOLING_REQUIRED",
-                    "recommendation_msg": "환기하기 좋은 날씨네요. 그러나 외기 온도가 매우 가파르게 상승하고 있어, 창문을 열기보다는 냉방을 유지하는 것이 에너지를 절약하는 길입니다.",
-                },
-                {
-                    "building_name": "중앙도서관",
-                    "building_ext_temp": 7.8,
-                    "building_ext_co2": 650,
-                    "operating_status": "HEATING_REQUIRED",
-                    "recommendation_msg": "외기 온도가 낮아 난방이 요구됩니다. 외기질은 양호하므로 최소한의 틈새 환기를 병행하며 난방을 운영하세요.",
-                },
-                {
-                    "building_name": "학생회관",
-                    "building_ext_temp": 18.3,
-                    "building_ext_co2": 690,
-                    "operating_status": "POWER_SAVING",
-                    "recommendation_msg": "현재 냉난방이 필요 없는 최적의 외부 기후입니다. 적극적인 자연환기를 전개하고, 모든 공조 설비를 절전/송풍 모드로 전환하여 에너지를 절약하세요.",
-                },
-                {
-                    "building_name": "테스트 결측 건물",
-                    "building_ext_temp": None,
-                    "building_ext_co2": None,
-                    "operating_status": None,
-                    "recommendation_msg": None,
-                },
-            ],
+            "campus_humidity": first_non_null(rows, "campus_humidity"),
+            "campus_aqi": first_non_null(rows, "avg_aqi"),
+            "buildings": buildings,
         },
     }
