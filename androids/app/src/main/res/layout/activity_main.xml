@@ -32,28 +32,47 @@
                 android:layout_height="match_parent">
 
                 <TextView
-                    android:id="@+id/textView"
+                    android:id="@+id/buildingName_TextView"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_span="2"
-                    android:text="선택한 건물: " />
+                    android:hint="선택한 건물"
+                    android:text="" />
             </TableRow>
 
             <TableRow
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <TextView
-                    android:id="@+id/textView2"
+                <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:text="온도: " />
+                    android:layout_height="wrap_content"
+                    android:hint="온도">
 
-                <TextView
-                    android:id="@+id/textView3"
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/temp_TextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text=""
+                        android:focusable="false"
+                        android:focusableInTouchMode="false"
+                        android:cursorVisible="false" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:text="CO2: " />
+                    android:layout_height="wrap_content"
+                    android:hint="CO2">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/co2_TextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text=""
+                        android:focusable="false"
+                        android:focusableInTouchMode="false"
+                        android:cursorVisible="false" />
+                </com.google.android.material.textfield.TextInputLayout>
             </TableRow>
 
             <TableRow
@@ -61,17 +80,35 @@
                 android:layout_height="match_parent">
 
 
-                <TextView
-                    android:id="@+id/textView4"
-                    android:layout_width="wrap_content"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="상태" />
+                    android:hint="상태">
 
-                <TextView
-                    android:id="@+id/textView5"
-                    android:layout_width="wrap_content"
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/status_TextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text=""
+                        android:focusable="false"
+                        android:focusableInTouchMode="false"
+                        android:cursorVisible="false" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="자연환기" />
+                    android:hint="자연환기">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/ventilation_TextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text=""
+                        android:focusable="false"
+                        android:focusableInTouchMode="false"
+                        android:cursorVisible="false" />
+                </com.google.android.material.textfield.TextInputLayout>
             </TableRow>
 
             <TableRow
@@ -80,17 +117,24 @@
                 android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/textView8"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/tag_TextView"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="운영정보"
                     android:layout_span="2"/>
             </TableRow>
-            <![CDATA[
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
-            />
-
-            ]]>
+                <TextView
+                    android:id="@+id/operation_TextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:layout_span="2"/>
+            </TableRow>
         </TableLayout>
 
     </LinearLayout>
