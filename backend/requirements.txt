@@ -4,4 +4,4 @@ tortoise-orm
 aiomysql
 python-dotenv
 httpx
-
+cryptography
