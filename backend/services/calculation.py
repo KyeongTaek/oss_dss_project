@@ -138,29 +138,28 @@ def return_none_if_missing(calculated_value: Any, *dependencies: Any) -> Any:
 # Heating need calculation
 # =========================
 
-def calculate_heating_need(external_temperature: Any) -> Optional[str]:
+def calculate_heating_need(temp: float | None) -> int | None:
     """
-    건물 외부 온도를 기준으로 난방 필요도를 계산한다.
+    난방 필요도를 계산한다.
 
-    기준:
-    - 8도 이하: 난방 강력 추천
-    - 10도 이하: 난방 추천
-    - 10도 초과: 난방 비추천
-
-    입력값이 None이거나 아웃라이어이면 None을 반환한다.
+    반환값:
+    2 = 난방 강력 추천
+    1 = 난방 추천
+    0 = 난방 비추천
+    None = 계산 불가
     """
-    temperature = validate_temperature(external_temperature)
+    temp = validate_temperature(temp)
 
-    if temperature is None:
+    if temp is None:
         return None
 
-    if temperature <= 8:
-        return HEATING_STRONGLY_RECOMMENDED
+    if temp <= 8:
+        return 2
 
-    if temperature <= 10:
-        return HEATING_RECOMMENDED
+    if temp <= 10:
+        return 1
 
-    return HEATING_NOT_RECOMMENDED
+    return 0
 
 
 # =========================
