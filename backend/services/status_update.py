@@ -13,6 +13,8 @@ from services.calculation import (
     calculate_ventilation_suitability,
     calculate_heating_need,
     calculate_temperature_change,
+    determine_operation_status,
+    get_rule_lookup_values,
 )
 
 load_dotenv()
@@ -84,10 +86,35 @@ async def fetch_latest_sensor_rows(pool: aiomysql.Pool) -> dict[str, dict]:
 
 async def fetch_past_sensor_rows(pool: aiomysql.Pool) -> dict[str, dict]:
     """
-    sensor_data에서 센서별 5~15분 전 데이터 중 가장 최신 데이터 1개씩 가져온다.
+    sensor_data에서 센서별 최신 데이터 시각을 기준으로
+    5~15분 전 데이터 중 가장 최신 데이터 1개씩 가져온다.
     temp_change 계산용이다.
     """
     query = """
+        WITH latest AS (
+            SELECT
+                sd.sensor,
+                sd.created_at AS latest_time
+            FROM sensor_data sd
+            INNER JOIN (
+                SELECT sensor, MAX(id) AS max_id
+                FROM sensor_data
+                GROUP BY sensor
+            ) latest_id
+                ON sd.sensor = latest_id.sensor
+                AND sd.id = latest_id.max_id
+        ),
+        past_id AS (
+            SELECT
+                past.sensor,
+                MAX(past.id) AS max_id
+            FROM sensor_data past
+            INNER JOIN latest l
+                ON past.sensor = l.sensor
+            WHERE past.created_at BETWEEN DATE_SUB(l.latest_time, INTERVAL 15 MINUTE)
+                                      AND DATE_SUB(l.latest_time, INTERVAL 5 MINUTE)
+            GROUP BY past.sensor
+        )
         SELECT
             sd.sensor,
             sd.temp,
@@ -95,15 +122,9 @@ async def fetch_past_sensor_rows(pool: aiomysql.Pool) -> dict[str, dict]:
             sd.aqi,
             sd.eco2
         FROM sensor_data sd
-        INNER JOIN (
-            SELECT sensor, MAX(id) AS max_id
-            FROM sensor_data
-            WHERE created_at BETWEEN DATE_SUB(NOW(), INTERVAL 15 MINUTE)
-                                AND DATE_SUB(NOW(), INTERVAL 5 MINUTE)
-            GROUP BY sensor
-        ) past
-            ON sd.sensor = past.sensor
-            AND sd.id = past.max_id;
+        INNER JOIN past_id p
+            ON sd.sensor = p.sensor
+            AND sd.id = p.max_id;
     """
 
     async with pool.acquire() as connection:
@@ -176,6 +197,35 @@ async def calculate_campus_environment(pool: aiomysql.Pool) -> dict:
         ),
     }
 
+async def fetch_rule_code(
+    pool: aiomysql.Pool,
+    ventilation: int | None,
+    temp_change_label: str | None,
+) -> int | None:
+    """
+    operation_rules에서 ventilation과 temp_change 조건에 맞는 rule_code를 조회한다.
+    """
+    if ventilation is None or temp_change_label is None:
+        return None
+
+    query = """
+        SELECT rule_code
+        FROM operation_rules
+        WHERE ventilation = %s
+          AND temp_change = %s
+        LIMIT 1;
+    """
+
+    async with pool.acquire() as connection:
+        async with connection.cursor(aiomysql.DictCursor) as cursor:
+            await cursor.execute(query, (ventilation, temp_change_label))
+            row = await cursor.fetchone()
+
+    if row is None:
+        return None
+
+    return row["rule_code"]
+
 
 async def remove_invalid_building_status_rows(pool: aiomysql.Pool) -> int:
     """
@@ -207,6 +257,8 @@ async def upsert_building_environment(
     ventilation: int | None,
     heating_need: int | None,
     temp_change: float | None,
+    operation_status: str | None,
+    rule_code: int | None,
 ) -> str:
     """
     building_status에 건물이 있으면 UPDATE,
@@ -243,8 +295,8 @@ async def upsert_building_environment(
                 ventilation = %s,
                 heating_need = %s,
                 temp_change = %s,
-                operation_status = NULL,
-                rule_code = NULL,
+                operation_status = %s,
+                rule_code = %s,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = %s;
                     """,
@@ -258,6 +310,8 @@ async def upsert_building_environment(
     ventilation,
     heating_need,
     temp_change,
+    operation_status,
+    rule_code,
     existing_row["id"],
 ),
                 )
@@ -265,7 +319,7 @@ async def upsert_building_environment(
 
             await cursor.execute(
                 """
-                INSERT INTO building_status
+                 INSERT INTO building_status
     (
         building_name,
         ext_temp,
@@ -276,10 +330,12 @@ async def upsert_building_environment(
         cooling_need,
         ventilation,
         heating_need,
-        temp_change
+        temp_change,
+        operation_status,
+        rule_code
     )
 VALUES
-    (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+    (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
                 """,
                 (
                     building_name,
@@ -292,6 +348,8 @@ VALUES
                     ventilation,
                     heating_need,
                     temp_change,
+                    operation_status,
+                    rule_code,
                 ),
             )
             return "inserted"
@@ -362,22 +420,43 @@ async def update_building_environment(pool: aiomysql.Pool) -> dict:
         ventilation = calculate_ventilation_suitability(ext_co2, campus_aqi)
         heating_need = calculate_heating_need(ext_temp)
 
+        operation_status = determine_operation_status(
+            temp_change=temp_change,
+            ventilation=ventilation,
+            cooling_need=cooling_need,
+            heating_need=heating_need,
+        )
+
+        rule_ventilation, rule_temp_change = get_rule_lookup_values(
+            operation_status=operation_status,
+            ventilation=ventilation,
+            temp_change=temp_change,
+        )
+
+        rule_code = await fetch_rule_code(
+            pool=pool,
+            ventilation=rule_ventilation,
+            temp_change_label=rule_temp_change,
+        )
+
         if ext_temp is None or ext_co2 is None:
             null_environment_count += 1
 
         result = await upsert_building_environment(
-        pool=pool,
-        building_name=building_name,
-        ext_temp=ext_temp,
-        ext_co2=ext_co2,
-        campus_humidity=campus_humidity,
-        campus_aqi=campus_aqi,
-        discomfort_idx=discomfort_idx,
-        cooling_need=cooling_need,
-        ventilation=ventilation,
-        heating_need=heating_need,
-        temp_change=temp_change,
-    )
+            pool=pool,
+            building_name=building_name,
+            ext_temp=ext_temp,
+            ext_co2=ext_co2,
+            campus_humidity=campus_humidity,
+            campus_aqi=campus_aqi,
+            discomfort_idx=discomfort_idx,
+            cooling_need=cooling_need,
+            ventilation=ventilation,
+            heating_need=heating_need,
+            temp_change=temp_change,
+            operation_status=operation_status,
+            rule_code=rule_code,
+        )
 
         if result == "updated":
             updated_count += 1
@@ -395,6 +474,8 @@ async def update_building_environment(pool: aiomysql.Pool) -> dict:
         "cooling_need_calculated": True,
         "ventilation_calculated": True,
         "temperature_change_calculated": True,
+        "operation_status_calculated": True,
+        "rule_code_mapped": True,
     }
 
 

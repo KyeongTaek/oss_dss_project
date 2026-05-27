@@ -374,77 +374,6 @@ def calculate_cooling_need(temp: float | None, humidity: float | None) -> int | 
 
     return 0
 
-def calculate_co2_ventilation_score(co2: float | None) -> int | None:
-    """
-    CO2 기준 자연환기 적합도 점수.
-
-    반환값:
-    2 = 환기 강력 추천
-    1 = 환기 추천
-    0 = 환기 비추천
-    None = 계산 불가
-    """
-    co2 = validate_co2(co2)
-
-    if co2 is None:
-        return None
-
-    if co2 <= 700:
-        return 2
-
-    if co2 <= 1000:
-        return 1
-
-    return 0
-
-
-def calculate_aqi_ventilation_score(aqi: float | None) -> int | None:
-    """
-    AQI 기준 자연환기 적합도 점수.
-
-    반환값:
-    2 = 환기 강력 추천
-    1 = 환기 추천
-    0 = 환기 비추천
-    None = 계산 불가
-    """
-    aqi = validate_aqi(aqi)
-
-    if aqi is None:
-        return None
-
-    if aqi <= 2:
-        return 2
-
-    if aqi <= 3:
-        return 1
-
-    return 0
-
-
-def calculate_ventilation_suitability(
-    co2: float | None,
-    aqi: float | None,
-) -> int | None:
-    """
-    건물 외부 CO2와 캠퍼스 AQI를 조합해 자연환기 적합도를 계산한다.
-
-    두 기준 중 더 나쁜 쪽을 최종 결과로 사용한다.
-
-    반환값:
-    2 = 환기 강력 추천
-    1 = 환기 추천
-    0 = 환기 비추천
-    None = 계산 불가
-    """
-    co2_score = calculate_co2_ventilation_score(co2)
-    aqi_score = calculate_aqi_ventilation_score(aqi)
-
-    if co2_score is None or aqi_score is None:
-        return None
-
-    return min(co2_score, aqi_score)
-
 def calculate_temperature_change(
     current_temp: float | None,
     past_temp: float | None,
@@ -463,3 +392,158 @@ def calculate_temperature_change(
         return None
 
     return round(current_temp - past_temp, 2)
+
+def calculate_co2_ventilation_score(co2: float | None) -> int | None:
+    """
+    CO2 기준 자연환기 적합도 점수.
+
+    반환값:
+    3 = 환기 강력 추천
+    2 = 환기 가능/추천
+    1 = 환기 비추천
+    None = 계산 불가
+    """
+    co2 = validate_co2(co2)
+
+    if co2 is None:
+        return None
+
+    if co2 <= 700:
+        return 3
+
+    if co2 <= 1000:
+        return 2
+
+    return 1
+
+
+def calculate_aqi_ventilation_score(aqi: float | None) -> int | None:
+    """
+    AQI 기준 자연환기 적합도 점수.
+
+    반환값:
+    3 = 환기 강력 추천
+    2 = 환기 가능/추천
+    1 = 환기 비추천
+    None = 계산 불가
+    """
+    aqi = validate_aqi(aqi)
+
+    if aqi is None:
+        return None
+
+    if aqi <= 2:
+        return 3
+
+    if aqi <= 3:
+        return 2
+
+    return 1
+
+
+def calculate_ventilation_suitability(
+    co2: float | None,
+    aqi: float | None,
+) -> int | None:
+    """
+    건물 외부 CO2와 캠퍼스 AQI를 조합해 자연환기 적합도를 계산한다.
+
+    두 기준 중 더 나쁜 쪽을 최종 결과로 사용한다.
+
+    반환값:
+    3 = 환기 강력 추천
+    2 = 환기 가능/추천
+    1 = 환기 비추천
+    None = 계산 불가
+    """
+    co2_score = calculate_co2_ventilation_score(co2)
+    aqi_score = calculate_aqi_ventilation_score(aqi)
+
+    if co2_score is None or aqi_score is None:
+        return None
+
+    return min(co2_score, aqi_score)
+
+def classify_temperature_change(temp_change: float | None) -> str | None:
+    """
+    온도 변화량을 operation_rules.temp_change 값에 맞는 문자열로 분류한다.
+    """
+    if temp_change is None:
+        return None
+
+    if temp_change >= 2.0:
+        return "급격한상승"
+
+    if temp_change <= -2.0:
+        return "급격한하강"
+
+    if temp_change > 0:
+        return "안정/상승"
+
+    return "안정/감소"
+
+
+def determine_operation_status(
+    temp_change: float | None,
+    ventilation: int | None,
+    cooling_need: int | None,
+    heating_need: int | None,
+) -> str | None:
+    """
+    4가지 지표를 바탕으로 최종 운영 상태를 결정한다.
+    """
+    if (
+        temp_change is None
+        or ventilation is None
+        or cooling_need is None
+        or heating_need is None
+    ):
+        return None
+
+    if cooling_need >= 1:
+        return "COOLING_REQUIRED"
+
+    if heating_need >= 1:
+        return "HEATING_REQUIRED"
+
+    return "POWER_SAVING"
+
+
+def get_rule_lookup_values(
+    operation_status: str | None,
+    ventilation: int | None,
+    temp_change: float | None,
+) -> tuple[int | None, str | None]:
+    """
+    operation_rules 테이블 조회에 사용할 ventilation, temp_change 값을 결정한다.
+    """
+    if operation_status is None or ventilation is None or temp_change is None:
+        return None, None
+
+    temp_change_label = classify_temperature_change(temp_change)
+
+    if temp_change_label is None:
+        return None, None
+
+    if operation_status == "COOLING_REQUIRED":
+        if ventilation == 1:
+            return 1, "상관없음"
+
+        if temp_change_label == "급격한상승":
+            return 2, "급격한상승"
+
+        return 2, "안정/감소"
+
+    if operation_status == "HEATING_REQUIRED":
+        if ventilation == 1:
+            return 1, "상관없음"
+
+        if temp_change_label == "급격한하강":
+            return 2, "급격한하강"
+
+        return 2, "안정/상승"
+
+    if operation_status == "POWER_SAVING":
+        return ventilation, "상관없음"
+
+    return None, None
