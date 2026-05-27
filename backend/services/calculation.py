@@ -374,3 +374,74 @@ def calculate_cooling_need(temp: float | None, humidity: float | None) -> int | 
         return 1
 
     return 0
+
+def calculate_co2_ventilation_score(co2: float | None) -> int | None:
+    """
+    CO2 기준 자연환기 적합도 점수.
+
+    반환값:
+    2 = 환기 강력 추천
+    1 = 환기 추천
+    0 = 환기 비추천
+    None = 계산 불가
+    """
+    co2 = validate_co2(co2)
+
+    if co2 is None:
+        return None
+
+    if co2 <= 700:
+        return 2
+
+    if co2 <= 1000:
+        return 1
+
+    return 0
+
+
+def calculate_aqi_ventilation_score(aqi: float | None) -> int | None:
+    """
+    AQI 기준 자연환기 적합도 점수.
+
+    반환값:
+    2 = 환기 강력 추천
+    1 = 환기 추천
+    0 = 환기 비추천
+    None = 계산 불가
+    """
+    aqi = validate_aqi(aqi)
+
+    if aqi is None:
+        return None
+
+    if aqi <= 2:
+        return 2
+
+    if aqi <= 3:
+        return 1
+
+    return 0
+
+
+def calculate_ventilation_suitability(
+    co2: float | None,
+    aqi: float | None,
+) -> int | None:
+    """
+    건물 외부 CO2와 캠퍼스 AQI를 조합해 자연환기 적합도를 계산한다.
+
+    두 기준 중 더 나쁜 쪽을 최종 결과로 사용한다.
+
+    반환값:
+    2 = 환기 강력 추천
+    1 = 환기 추천
+    0 = 환기 비추천
+    None = 계산 불가
+    """
+    co2_score = calculate_co2_ventilation_score(co2)
+    aqi_score = calculate_aqi_ventilation_score(aqi)
+
+    if co2_score is None or aqi_score is None:
+        return None
+
+    return min(co2_score, aqi_score)

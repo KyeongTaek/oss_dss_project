@@ -5,6 +5,11 @@ from typing import Any
 import aiomysql
 from dotenv import load_dotenv
 
+from services.calculation import (
+    calculate_discomfort_index,
+    calculate_cooling_need,
+    calculate_ventilation_suitability,
+)
 
 load_dotenv()
 
@@ -162,6 +167,9 @@ async def upsert_building_environment(
     ext_co2: float | None,
     campus_humidity: float | None,
     campus_aqi: float | None,
+    discomfort_idx: float | None,
+    cooling_need: int | None,
+    ventilation: int | None,
 ) -> str:
     """
     building_status에 건물이 있으면 UPDATE,
@@ -188,30 +196,47 @@ async def upsert_building_environment(
                 await cursor.execute(
                     """
                     UPDATE building_status
-                    SET
-                        ext_temp = %s,
-                        ext_co2 = %s,
-                        Avg_humidity = %s,
+		    SET
+		        ext_temp = %s,
+   		        ext_co2 = %s,
+   		        Avg_humidity = %s,
                         avg_aqi = %s,
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE id = %s;
+                        discomfort_idx = %s,
+                        cooling_need = %s,
+			ventilation = %s,
+			operation_status = NULL,
+			rule_code = NULL,
+	       	        updated_at = CURRENT_TIMESTAMP
+	            WHERE id = %s;
                     """,
                     (
-                        ext_temp,
-                        ext_co2,
-                        campus_humidity,
-                        campus_aqi,
-                        existing_row["id"],
-                    ),
+    ext_temp,
+    ext_co2,
+    campus_humidity,
+    campus_aqi,
+    discomfort_idx,
+    cooling_need,
+    ventilation,
+    existing_row["id"],
+),
                 )
                 return "updated"
 
             await cursor.execute(
                 """
                 INSERT INTO building_status
-                    (building_name, ext_temp, ext_co2, Avg_humidity, avg_aqi)
-                VALUES
-                    (%s, %s, %s, %s, %s);
+    (
+        building_name,
+        ext_temp,
+        ext_co2,
+        Avg_humidity,
+        avg_aqi,
+        discomfort_idx,
+        cooling_need,
+        ventilation
+    )
+VALUES
+    (%s, %s, %s, %s, %s, %s, %s, %s);
                 """,
                 (
                     building_name,
@@ -219,6 +244,9 @@ async def upsert_building_environment(
                     ext_co2,
                     campus_humidity,
                     campus_aqi,
+discomfort_idx,
+    cooling_need,
+    ventilation,
                 ),
             )
             return "inserted"
@@ -234,6 +262,10 @@ async def update_building_environment(pool: aiomysql.Pool) -> dict:
     latest_sensors = await fetch_latest_sensor_rows(pool)
     building_maps = await fetch_building_sensor_map(pool)
     campus_environment = await calculate_campus_environment(pool)
+    campus_humidity = campus_environment["campus_humidity"]
+    campus_aqi = campus_environment["campus_aqi"]
+    campus_humidity = campus_environment["campus_humidity"]
+    campus_aqi = campus_environment["campus_aqi"]
 
     updated_count = 0
     inserted_count = 0
@@ -265,18 +297,24 @@ async def update_building_environment(pool: aiomysql.Pool) -> dict:
 
         ext_temp = average_if_all_present(temps)
         ext_co2 = average_if_all_present(eco2_values)
+        discomfort_idx = calculate_discomfort_index(ext_temp, campus_humidity)
+        cooling_need = calculate_cooling_need(ext_temp, campus_humidity)
+        ventilation = calculate_ventilation_suitability(ext_co2, campus_aqi)
 
         if ext_temp is None or ext_co2 is None:
             null_environment_count += 1
 
         result = await upsert_building_environment(
-            pool=pool,
-            building_name=building_name,
-            ext_temp=ext_temp,
-            ext_co2=ext_co2,
-            campus_humidity=campus_environment["campus_humidity"],
-            campus_aqi=campus_environment["campus_aqi"],
-        )
+    pool=pool,
+    building_name=building_name,
+    ext_temp=ext_temp,
+    ext_co2=ext_co2,
+    campus_humidity=campus_humidity,
+    campus_aqi=campus_aqi,
+    discomfort_idx=discomfort_idx,
+    cooling_need=cooling_need,
+    ventilation=ventilation,
+)
 
         if result == "updated":
             updated_count += 1
@@ -291,6 +329,8 @@ async def update_building_environment(pool: aiomysql.Pool) -> dict:
         "null_environment_count": null_environment_count,
         "campus_humidity": campus_environment["campus_humidity"],
         "campus_aqi": campus_environment["campus_aqi"],
+"cooling_need_calculated": True,
+"ventilation_calculated": True,
     }
 
 
