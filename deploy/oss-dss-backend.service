@@ -1,0 +1,14 @@
+[Unit]
+Description=OSS DSS FastAPI Backend
+After=network.target mysql.service
+
+[Service]
+User=rasp5
+WorkingDirectory=/home/rasp5/oss_dss_project/backend
+EnvironmentFile=/home/rasp5/oss_dss_project/backend/.env
+ExecStart=/home/rasp5/oss_dss_project/backend/.venv/bin/python -m uvicorn main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
