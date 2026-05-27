@@ -327,3 +327,50 @@ def run_unit_debugging() -> None:
 
 if __name__ == "__main__":
     run_unit_debugging()
+
+def calculate_discomfort_index(temp: float | None, humidity: float | None) -> float | None:
+    """
+    불쾌지수(DI)를 계산한다.
+
+    temp: 건물 외부 온도
+    humidity: 캠퍼스 평균 습도, 0~100 퍼센트 값
+    """
+    temp = validate_temperature(temp)
+    humidity = validate_humidity(humidity)
+
+    if temp is None or humidity is None:
+        return None
+
+    humidity_ratio = humidity / 100
+
+    discomfort_index = (
+        1.8 * temp
+        - 0.55 * (1 - humidity_ratio) * (1.8 * temp - 26)
+        + 32
+    )
+
+    return round(discomfort_index, 2)
+
+
+def calculate_cooling_need(temp: float | None, humidity: float | None) -> int | None:
+    """
+    냉방 필요도를 계산한다.
+
+    반환값:
+    2 = 냉방 강력 추천
+    1 = 냉방 추천
+    0 = 냉방 비추천
+    None = 계산 불가
+    """
+    discomfort_index = calculate_discomfort_index(temp, humidity)
+
+    if discomfort_index is None:
+        return None
+
+    if discomfort_index >= 80:
+        return 2
+
+    if discomfort_index >= 75:
+        return 1
+
+    return 0
