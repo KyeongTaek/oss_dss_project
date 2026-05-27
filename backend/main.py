@@ -1,4 +1,5 @@
 from services.sensor_sync import sync_latest_sensor_data
+from services.status_update import update_building_environment
 import os
 from decimal import Decimal
 from typing import Any, Optional
@@ -7,6 +8,8 @@ import aiomysql
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
+import asyncio
+from contextlib import suppress
 
 load_dotenv()
 
@@ -41,6 +44,33 @@ def first_non_null(rows: list[dict], key: str) -> Optional[Any]:
 
     return None
 
+SENSOR_COLLECTION_INTERVAL_SECONDS = int(
+    os.getenv("SENSOR_COLLECTION_INTERVAL_SECONDS", "600")
+)
+
+
+async def run_sensor_collection_scheduler():
+    """
+    10분 주기로 수업 서버 센서 데이터를 수집하고 building_status를 갱신한다.
+    """
+    await asyncio.sleep(5)
+
+    while True:
+        try:
+            sensor_sync_result = await sync_latest_sensor_data(app.state.mysql_pool)
+            building_status_result = await update_building_environment(app.state.mysql_pool)
+
+            print("[scheduler] sensor sync result:", sensor_sync_result)
+            print("[scheduler] building status update result:", building_status_result)
+
+        except asyncio.CancelledError:
+            raise
+
+        except Exception as error:
+            print("[scheduler] failed:", repr(error))
+
+        await asyncio.sleep(SENSOR_COLLECTION_INTERVAL_SECONDS)
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -56,9 +86,20 @@ async def startup_event():
         maxsize=10,
     )
 
+    app.state.sensor_scheduler_task = asyncio.create_task(
+        run_sensor_collection_scheduler()
+    )
+
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    scheduler_task = getattr(app.state, "sensor_scheduler_task", None)
+
+    if scheduler_task:
+        scheduler_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await scheduler_task
+
     pool = app.state.mysql_pool
     pool.close()
     await pool.wait_closed()

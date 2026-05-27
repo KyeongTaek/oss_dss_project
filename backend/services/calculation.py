@@ -444,3 +444,22 @@ def calculate_ventilation_suitability(
         return None
 
     return min(co2_score, aqi_score)
+
+def calculate_temperature_change(
+    current_temp: float | None,
+    past_temp: float | None,
+) -> float | None:
+    """
+    온도 변화량을 계산한다.
+
+    반환값:
+    현재 온도 - 과거 온도
+    None = 계산 불가
+    """
+    current_temp = validate_temperature(current_temp)
+    past_temp = validate_temperature(past_temp)
+
+    if current_temp is None or past_temp is None:
+        return None
+
+    return round(current_temp - past_temp, 2)
