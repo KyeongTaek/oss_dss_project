@@ -98,10 +98,10 @@
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="자연환기">
+                    android:hint="습도">
 
                     <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/ventilation_TextView"
+                        android:id="@+id/humidity_TextView"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:text=""

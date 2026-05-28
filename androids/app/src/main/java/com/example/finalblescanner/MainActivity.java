@@ -60,8 +60,7 @@ public class MainActivity extends AppCompatActivity {
     public TextView tempView;
     public TextView co2View;
     public TextView statusView;
-    public TextView ventilationView;
-    public TextView tagView;
+    public TextView humidityView;
     public TextView operationView;
 
     @Override
@@ -80,19 +79,19 @@ public class MainActivity extends AppCompatActivity {
         String keyHash = KakaoMapSdk.INSTANCE.getHashKey();
         Log.d("KakaoKeyHash", "내 키 해시값: " + keyHash);
 
-//        Map<String, Object> building_data = (Map)fakeSensorResponse.get("data");
-//        buildingView = findViewById(R.id.buildingName_TextView);
-//        buildingView.setText(((Map)((List)building_data.get("buildings")).get(0)).get("building_name").toString());
-//        tempView = findViewById(R.id.temp_TextView);
-//        tempView.setText(((Map)((List)building_data.get("buildings")).get(0)).get("building_ext_temp").toString());
-//        co2View = findViewById(R.id.co2_TextView);
-//        co2View.setText(((Map)((List)building_data.get("buildings")).get(0)).get("building_ext_co2").toString());
-//        statusView = findViewById(R.id.status_TextView);
-//        statusView.setText(((Map)((List)building_data.get("buildings")).get(0)).get("operating_status").toString());
-//        ventilationView = findViewById(R.id.ventilation_TextView);
-//        ventilationView.setText(building_data.get("campus_humidity").toString());
-//        operationView = findViewById(R.id.operation_TextView);
-//        operationView.setText(((Map)((List)building_data.get("buildings")).get(0)).get("recommendation_msg").toString());
+        Map<String, Object> building_data = (Map)fakeSensorResponse.get("data");
+        buildingView = findViewById(R.id.buildingName_TextView);
+        buildingView.setText("선택한 건물: " + ((Map)((List)building_data.get("buildings")).get(0)).get("building_name").toString());
+        tempView = findViewById(R.id.temp_TextView);
+        tempView.setText(((Map)((List)building_data.get("buildings")).get(0)).get("building_ext_temp").toString());
+        co2View = findViewById(R.id.co2_TextView);
+        co2View.setText(((Map)((List)building_data.get("buildings")).get(0)).get("building_ext_co2").toString());
+        statusView = findViewById(R.id.status_TextView);
+        statusView.setText(((Map)((List)building_data.get("buildings")).get(0)).get("operating_status").toString());
+        humidityView = findViewById(R.id.humidity_TextView);
+        humidityView.setText(building_data.get("campus_humidity").toString());
+        operationView = findViewById(R.id.operation_TextView);
+        operationView.setText(((Map)((List)building_data.get("buildings")).get(0)).get("recommendation_msg").toString());
 
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
