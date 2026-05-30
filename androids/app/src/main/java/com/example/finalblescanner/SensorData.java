@@ -70,6 +70,7 @@ class CommonSensorData {
     private String time;
     private String sensorTime;
     private String deviceName;
+    private String deviceAddress;
     private float temperature;
     private int eco2;
 
@@ -84,6 +85,7 @@ class CommonSensorData {
         this.time = time;
         this.sensorTime = sensorTime;
         this.unixTimestamp = unixTimestamp;
+        this.deviceAddress = deviceAddress;
         this.deviceName = deviceName;
 
         this.temperature = temperature;
@@ -99,7 +101,7 @@ class CommonSensorData {
 
     public long getUnixTimestamp() { return unixTimestamp;}
     public String getDeviceName() {return deviceName;}
-
+    public String getDeviceAddress() {return deviceAddress;}
     public float getTemperature() {return temperature;}
     public int getEco2(){return eco2;}
 

@@ -15,7 +15,9 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
 import retrofit2.http.Body;
+import retrofit2.http.GET;
 import retrofit2.http.POST;
+import retrofit2.http.Query;
 
 public class NetworkModule {
     private static final String ANALYSIS_BASE_URL = BuildConfig.ANALYSIS_SERVER_URL; // 직접 url을 적지 않고 local.properties에 적음
@@ -99,8 +101,22 @@ public class NetworkModule {
                 data.getRssi()
         );
     }
+
+    public static CommonTypeDataRequest fromCommonSensorData(CommonSensorData data, String deviceId) {
+        return new CommonTypeDataRequest(
+                data.getDeviceAddress(),
+                data.getDeviceName(),
+                deviceId,
+                "mobile",
+                data.getTemperature(),
+                data.getEco2(),
+                data.getUnixTimestamp(),
+                data.getRssi()
+        );
+    }
 }
 
+// 특수 라즈베리파이 센서 포맷
 class SpecialTypeDataRequest {
     @SerializedName("key")       private String key;
     @SerializedName("team")      private String team;
@@ -126,7 +142,27 @@ class SpecialTypeDataRequest {
         this.lat = lat; this.lon = lon; this.sender = sender; this.rssi = rssi;
     }
 }
+// 일반 라즈베리파이 센서 포맷
+class CommonTypeDataRequest {
+    @SerializedName("mac")          private String mac;
+    @SerializedName("sensor")       private String sensor;
+    @SerializedName("receiver")     private String receiver;
+    @SerializedName("mode")         private String mode;
+    @SerializedName("temperature")  private double temp;
+    @SerializedName("co2")          private int eco2;
+    @SerializedName("sensing_time") private long timestamp;
+    @SerializedName("rssi")         private int rssi;
 
+    public CommonTypeDataRequest(String mac, String sensor, String receiver,
+                                 String mode, double temp, int eco2,
+                                 long timestamp, int rssi) {
+        this.mac = mac; this.sensor = sensor; this.receiver = receiver;
+        this.mode = mode; this.temp = temp; this.eco2 = eco2;
+        this.timestamp = timestamp; this.rssi = rssi;
+    }
+}
+
+// 특수 라즈베리파이 센서 데이터에 대한 응답
 class SpecialTypeDataResponse {
     @SerializedName("result")        private String result;
     @SerializedName("message")       private String message;
@@ -140,8 +176,67 @@ class SpecialTypeDataResponse {
         @SerializedName("sensor") private String sensor;
     }
 }
+// refresh나 status에 대한 응답
+class ServerDataResponse {
+    @SerializedName("statusCode")   private int statusCode;
+    @SerializedName("message")      private String message;
+    @SerializedName("data")         private CampusData data;
 
-interface SpecialApiService{ // 엔드포인트에 POST로 SpecialTypeDataRequest를 보낼 것임을 명시
+    public int getStatusCode()          {   return statusCode; }
+    public String getMessage()          {   return message; }
+    public CampusData getCampusData()   {   return data; }
+
+    class CampusData {
+        @SerializedName("campus_humidity")  private double humid;
+        @SerializedName("campus_aqi")       private double aqi;
+        @SerializedName("buildings")        private BuildingList buildings;
+
+        public double getCampusHumidity()   {   return humid; }
+        public double getCampusAqi()        {   return aqi; }
+        public BuildingList getBuildings()  {   return buildings; }
+
+        class BuildingList {
+            @SerializedName("building_name")        private String name;
+            @SerializedName("building_ext_temp")    private double temp;
+            @SerializedName("building_ext_co2")     private double co2;
+            @SerializedName("operating_status")     private String status;
+            @SerializedName("recommendation_msg")   private String msg;
+
+            public String getName()     {   return name; }
+            public double getTemp()     {   return temp; }
+            public double getCo2()      {   return co2; }
+            public String getStatus()   {   return status; }
+            public String getMsg()      {   return msg; }
+        }
+    }
+}
+
+// sensor/sensing에 대한 GET
+interface CommonSensorApiService{
+    @GET("sensor/sensing/")
+    Call<String> get(
+            @Query("mac") String mac,
+            @Query("sensor") String sensor,
+            @Query("receiver") String receiver,
+            @Query("mode") String mode,
+            @Query("temperature") double temperature,
+            @Query("co2") int co2,
+            @Query("sensing_time") long sensing_time,
+            @Query("rssi") int rssi
+    );
+}
+// 엔드포인트에 POST로 SpecialTypeDataRequest를 보낼 것임을 명시
+interface SpecialSensorApiService{
     @POST("sensor/opensrc/upload/")
     Call<SpecialTypeDataResponse> sendSensorData(@Body SpecialTypeDataRequest data);
+}
+// api/campus/refresh에 대한 POST
+interface RefreshApiService {
+    @POST("api/campus/refresh/")
+    Call<ServerDataResponse> triggerRefresh();
+}
+// api/campus/status에 대한 GET
+interface StatusApiService {
+    @GET("api/campus/status/")
+    Call<ServerDataResponse> get();
 }
