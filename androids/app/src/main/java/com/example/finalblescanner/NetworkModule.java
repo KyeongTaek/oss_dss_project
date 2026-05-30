@@ -1,6 +1,8 @@
 package com.example.finalblescanner;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 
@@ -63,6 +65,20 @@ public class NetworkModule {
         }
 
         return false;
+    }
+
+    public static void showStatusDialog(Context cont, String title, String message) { // 통신 결과를 보여주는, 확인버튼만 있는 dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(cont); // activity 컨텍스트를 받아, UI를 띄워주는 틀.
+        builder.setTitle(title)
+                .setMessage(message)
+                .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss(); // 확인 버튼 누르면 창 닫음
+                    }
+                })
+                .create()
+                .show();
     }
 
     public static SpecialTypeDataRequest fromSpecialSensorData(SensorData data, String deviceId, double lat, double lon) {
