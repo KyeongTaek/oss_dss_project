@@ -81,7 +81,7 @@ public class NetworkModule {
                 .show();
     }
 
-    public static SpecialTypeDataRequest fromSpecialSensorData(SensorData data, String deviceId, double lat, double lon) {
+    public static SpecialTypeDataRequest fromSpecialSensorData(SpecialSensorData data, String deviceId, double lat, double lon) {
         return new SpecialTypeDataRequest(
                 "opensrc2026",
                 "team 5",

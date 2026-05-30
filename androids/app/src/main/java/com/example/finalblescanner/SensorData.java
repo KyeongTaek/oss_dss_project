@@ -1,6 +1,6 @@
 package com.example.finalblescanner;
 
-public class SensorData {
+class SpecialSensorData {
     private String time;
     private String sensorTime;
     private String deviceName;
@@ -22,7 +22,7 @@ public class SensorData {
     //숫자 형식 시간을 받는 변수 추가
     private long unixTimestamp;
     //sensordata에 unixtimestamp 추가
-    public SensorData(String time, String sensorTime, long unixTimestamp, String deviceAddress, String deviceName,
+    public SpecialSensorData(String time, String sensorTime, long unixTimestamp, String deviceAddress, String deviceName,
                       float temperature, float humidity, int aqi, int tvoc, int eco2, double lat, double lon, String rawHex, int rssi, String uuid) {
         this.time = time;
         this.sensorTime = sensorTime;
@@ -59,6 +59,49 @@ public class SensorData {
 
     public double getLat(){return lat;}
     public double getLon(){return lon;}
+
+    public String getRawHex() {return rawHex;}
+    public int getRssi(){return rssi;}
+    public String getUuid(){return uuid;}
+
+}
+
+class CommonSensorData {
+    private String time;
+    private String sensorTime;
+    private String deviceName;
+    private float temperature;
+    private int eco2;
+
+    private String rawHex;
+    private int rssi;
+    private String uuid;
+    //숫자 형식 시간을 받는 변수 추가
+    private long unixTimestamp;
+    //sensordata에 unixtimestamp 추가
+    public CommonSensorData(String time, String sensorTime, long unixTimestamp, String deviceName,
+                             float temperature, int eco2, String rawHex, int rssi, String uuid) {
+        this.time = time;
+        this.sensorTime = sensorTime;
+        this.unixTimestamp = unixTimestamp;
+        this.deviceName = deviceName;
+
+        this.temperature = temperature;
+        this.eco2 = eco2;
+
+        this.rawHex = rawHex;
+        this.rssi = rssi;
+        this.uuid = uuid;
+    }
+
+    public String getTime() {return time;}
+    public String getSensorTime() {return sensorTime;}
+
+    public long getUnixTimestamp() { return unixTimestamp;}
+    public String getDeviceName() {return deviceName;}
+
+    public float getTemperature() {return temperature;}
+    public int getEco2(){return eco2;}
 
     public String getRawHex() {return rawHex;}
     public int getRssi(){return rssi;}
