@@ -211,8 +211,9 @@ class ServerDataResponse {
     }
 }
 
-// sensor/sensing에 대한 GET
-interface CommonSensorApiService{
+// 수업 서버로의 요청
+interface ClassApiService {
+    // sensor/sensing에 대한 GET
     @GET("sensor/sensing/")
     Call<String> get(
             @Query("mac") String mac,
@@ -224,19 +225,18 @@ interface CommonSensorApiService{
             @Query("sensing_time") long sensing_time,
             @Query("rssi") int rssi
     );
-}
-// 엔드포인트에 POST로 SpecialTypeDataRequest를 보낼 것임을 명시
-interface SpecialSensorApiService{
+
+    // 엔드포인트에 POST로 SpecialTypeDataRequest를 보낼 것임을 명시
     @POST("sensor/opensrc/upload/")
     Call<SpecialTypeDataResponse> sendSensorData(@Body SpecialTypeDataRequest data);
 }
-// api/campus/refresh에 대한 POST
-interface RefreshApiService {
+// 분석 서버로의 요청
+interface AnalysisApiService {
+    // api/campus/refresh에 대한 POST
     @POST("api/campus/refresh/")
     Call<ServerDataResponse> triggerRefresh();
-}
-// api/campus/status에 대한 GET
-interface StatusApiService {
+
+    // api/campus/status에 대한 GET
     @GET("api/campus/status/")
     Call<ServerDataResponse> get();
 }

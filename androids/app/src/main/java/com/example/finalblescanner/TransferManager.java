@@ -13,19 +13,23 @@ public class TransferManager {
     private static final String TAG = "TransferManager";
 
     private final Context context;
-    private SpecialApiService apiService = null;
+    private final ClassApiService classApiService;
+    private final AnalysisApiService analysisApiService;
 
-    public TransferManager(Context context, String type) {
+    // Retrofit이 ApiService 인터페이스를 실제 동작하는 객체로 만들어줌
+    public TransferManager(Context context) {
         this.context = context;
-        if (type.equals("special")) {
-            this.apiService = NetworkModule
-                    .getClassConn()
-                    .create(SpecialApiService.class);
-        }
-                //Retrofit이 ApiService 인터페이스를 실제 동작하는 객체로 만들어줌
+
+        this.classApiService = NetworkModule
+                .getClassConn()
+                .create(ClassApiService.class);
+
+        this.analysisApiService = NetworkModule
+                .getAnalysisConn()
+                .create(AnalysisApiService.class);
     }
 
-    public void executeDataTransfer(SpecialTypeDataRequest data) {
+    public void uploadSensorData(SpecialTypeDataRequest data) {
         if (!NetworkModule.isNetworkAvailable(context)) { //현재 인터넷 연결 여부를 확인
             NetworkModule.showStatusDialog(
                     context,
@@ -35,8 +39,8 @@ public class TransferManager {
             return;
         }
 
-        // data를 POST로 서버에 전송하고 응답은 DataResponse 형태로 받을 것이라 명시.
-        Call<SpecialTypeDataResponse> call = apiService.sendSensorData(data); // 통신 시작, 상태 관리 등을 할 수 있는 Call<DataResponse> 객체를 call에 담음.
+        // data를 POST로 서버에 전송하고 응답은 SpecialTypeDataResponse 형태로 받을 것이라 명시.
+        Call<SpecialTypeDataResponse> call = classApiService.sendSensorData(data); // 통신 시작, 상태 관리 등을 할 수 있는 Call<DataResponse> 객체를 call에 담음.
 
         // enqueue()를 이용한 비동기 통신 시작(한 번만 보냄!)
         // 앱 화면을 멈추지 않고 서버 요청을 백그라운드에서 처리
@@ -45,7 +49,6 @@ public class TransferManager {
             //서버가 응답 돌려줬을 때 실행
             @Override
             public void onResponse(Call<SpecialTypeDataResponse> call, Response<SpecialTypeDataResponse> response) {
-                //역할 D 담당
                 //응답 코드별 처리(성공, 실패 분기 / 다이얼로그 표시)
                 if (response.isSuccessful() && response.body() != null) { // 응답코드가 200~300 사이이고(성공) 응답내용이 비어있지 않다면
                     SpecialTypeDataResponse dataResponse = response.body();
