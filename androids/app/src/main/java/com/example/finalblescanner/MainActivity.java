@@ -27,6 +27,7 @@ import android.widget.Toast;
 import androidx.core.app.ActivityCompat;
 
 public class MainActivity extends AppCompatActivity {
+    private static MainActivity instance;
     public static MapView mapView;
 
     static List<Map<String, Object>> building_loc = List.of(
@@ -56,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
     public static TextView humidityView;
     public static TextView operationView;
 
-    private TransferManager transferManager;
+    private CampusMapCallback campusMapCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,10 +66,12 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
+        instance = this;
+
         KakaoMapSdk.init(this, BuildConfig.API_KEY);
         mapView = findViewById(R.id.map_view);
 
-        CampusMapCallback campusMapCallback = new CampusMapCallback(building_loc, null);
+        campusMapCallback = new CampusMapCallback(building_loc, null);
         mapView.start(campusMapCallback.lifeCycleCallback, campusMapCallback.readyCallback);
 
         // onCreate 내부 또는 적절한 위치에 추가
@@ -86,6 +89,8 @@ public class MainActivity extends AppCompatActivity {
         Intent serviceIntent = new Intent(context, BleScanService.class);
 
         context.startForegroundService(serviceIntent);
+
+        BleScanService.getCampusStatus();
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -109,10 +114,15 @@ public class MainActivity extends AppCompatActivity {
         operationView.setText("-");
     }
     public static void fillMap(ServerDataResponse.CampusData data) {
-        CampusMapCallback campusMapCallback = new CampusMapCallback(building_loc, data);
-
-        mapView.pause();
-        mapView.resume();
+        instance.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // pause/resume 하지 말고, 기존 콜백 객체의 마커 업데이트 함수만 호출!
+                if (instance.campusMapCallback != null) {
+                    instance.campusMapCallback.updateMarkers(data);
+                }
+            }
+        });
     }
     public static void fillBottomSheet(ServerDataResponse.CampusData data) {
         if (data == null) {
@@ -125,12 +135,12 @@ public class MainActivity extends AppCompatActivity {
         }
         else {
             ServerDataResponse.CampusData.Building represent = data.getBuildings().get(0);
-            buildingView.setText("선택한 건물: " + represent.getName());
+            buildingView.setText("선택한 건물: " + ((represent.getName() != null) ? represent.getName() : "-"));
             tempView.setText(String.valueOf(represent.getTemp()));
             co2View.setText(String.valueOf(represent.getCo2()));
-            statusView.setText(represent.getStatus());
+            statusView.setText((represent.getStatus() != null) ? represent.getStatus() : "-");
             humidityView.setText(String.valueOf(data.getCampusHumidity()));
-            operationView.setText(represent.getMsg());
+            operationView.setText((represent.getMsg() != null) ? represent.getMsg() : "-");
         }
     }
     public static void fillBottomSheet(ServerDataResponse.CampusData.Building data, double humidity) {
@@ -144,12 +154,12 @@ public class MainActivity extends AppCompatActivity {
         }
         else {
             ServerDataResponse.CampusData.Building represent = data;
-            buildingView.setText("선택한 건물: " + represent.getName());
+            buildingView.setText("선택한 건물: " + ((represent.getName() != null) ? represent.getName() : "-"));
             tempView.setText(String.valueOf(represent.getTemp()));
             co2View.setText(String.valueOf(represent.getCo2()));
-            statusView.setText(represent.getStatus());
+            statusView.setText((represent.getStatus() != null) ? represent.getStatus() : "-");
             humidityView.setText(String.valueOf(humidity));
-            operationView.setText(represent.getMsg());
+            operationView.setText((represent.getMsg() != null) ? represent.getMsg() : "-");
         }
     }
 

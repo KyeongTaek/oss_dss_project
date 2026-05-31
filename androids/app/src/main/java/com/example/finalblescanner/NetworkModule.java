@@ -28,6 +28,9 @@ public class NetworkModule {
     // 싱글톤(전체에 analysis_conn, class_conn 객체 각각 한 개) 위한 conn 변수 선언
     private static Retrofit analysis_conn = null;
     private static Retrofit class_conn = null;
+    private static AnalysisApiService analysisApiService = null;
+    private static ClassApiService classApiService = null;
+
 
     // retrofit 인스턴스 반환 함수
     public static Retrofit getAnalysisConn() {
@@ -56,6 +59,21 @@ public class NetworkModule {
 
         return class_conn;
     }
+    public static synchronized AnalysisApiService getAnalysisApiService() {
+        if (analysisApiService == null) {
+            // 기존에 정의된 getAnalysisConn()을 활용해 인터페이스를 create 합니다.
+            analysisApiService = getAnalysisConn().create(AnalysisApiService.class);
+        }
+        return analysisApiService;
+    }
+    public static synchronized ClassApiService getClassApiService() {
+        if (classApiService == null) {
+            // 기존에 정의된 getClassConn()을 활용해 인터페이스를 create 합니다.
+            classApiService = getClassConn().create(ClassApiService.class);
+        }
+        return classApiService;
+    }
+
 
     public static boolean isNetworkAvailable(Context context) {
         ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);

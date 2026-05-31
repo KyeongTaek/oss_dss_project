@@ -45,8 +45,8 @@ public class BleScanService extends Service {
 
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothLeScanner bluetoothLeScanner;
-    private ClassApiService classApiService;
-    private AnalysisApiService analysisApiService;
+    private static ClassApiService classApiService;
+    private static AnalysisApiService analysisApiService;
 
     private double currentLat = 36.6287; // 기본값
     private double currentLon = 127.4606;
@@ -99,11 +99,11 @@ public class BleScanService extends Service {
 
 
 
-        this.classApiService = NetworkModule
+        classApiService = NetworkModule
                 .getClassConn()
                 .create(ClassApiService.class);
 
-        this.analysisApiService = NetworkModule
+        analysisApiService = NetworkModule
                 .getAnalysisConn()
                 .create(AnalysisApiService.class);
     }
@@ -469,7 +469,7 @@ public class BleScanService extends Service {
         });
     }
 
-    public void getCampusStatus() {
+    public static void getCampusStatus() {
         if (!NetworkModule.isNetworkAvailable(context)) { //현재 인터넷 연결 여부를 확인
             NetworkModule.showStatusDialog(
                     context,
@@ -479,7 +479,7 @@ public class BleScanService extends Service {
             return;
         }
 
-        Call<ServerDataResponse> call = analysisApiService.get();
+        Call<ServerDataResponse> call = NetworkModule.getAnalysisApiService().get();
 
         // enqueue()를 이용한 비동기 통신 시작(한 번만 보냄!)
         // 앱 화면을 멈추지 않고 서버 요청을 백그라운드에서 처리

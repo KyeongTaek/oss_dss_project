@@ -24,6 +24,8 @@ import java.util.Map;
 public class CampusMapCallback {
     List<Map<String, Object>> locations;
     ServerDataResponse.CampusData responses;
+    private KakaoMap kakaoMap;
+    private ServerDataResponse.CampusData pendingData = null;
 
     public CampusMapCallback(List<Map<String, Object>> loc, ServerDataResponse.CampusData sensorResponse) {
         locations = loc;
@@ -33,6 +35,7 @@ public class CampusMapCallback {
         @Override
         public void onMapDestroy() {
             // 지도 API 가 정상적으로 종료될 때 호출됨
+            kakaoMap = null;
         }
 
         @Override
@@ -43,8 +46,17 @@ public class CampusMapCallback {
 
     public final KakaoMapReadyCallback readyCallback = new KakaoMapReadyCallback() {
         @Override
-        public void onMapReady(KakaoMap kakaoMap) {
-
+        public void onMapReady(KakaoMap mapInstance) {
+            kakaoMap = mapInstance;
+            if (pendingData != null) {
+                Log.d("CampusMapCallback", "대기 중이던 최신 서버 데이터로 마커 그림");
+                responses = pendingData;
+                drawMarkers(pendingData);
+                pendingData = null;
+            }
+            else if (responses != null) {
+                drawMarkers(responses);
+            }
 
             kakaoMap.setOnLabelClickListener(new KakaoMap.OnLabelClickListener() {
                 @Override
@@ -81,40 +93,53 @@ public class CampusMapCallback {
                     return true; // 이벤트를 소비했으므로 true 리턴
                 }
             });
+        }
 
-            // 인증 후 API 가 정상적으로 실행될 때 호출됨
-            LabelStyles styles = LabelStyles.from("myStyleId",
-                    LabelStyle.from(R.drawable.red_marker).setZoomLevel(8),
-                    LabelStyle.from(R.drawable.blue_marker).setZoomLevel(11),
-                    LabelStyle.from(R.drawable.blue_marker).setTextStyles(32, Color.BLACK, 1, Color.GRAY).setZoomLevel(15));
+        @Override
+        public LatLng getPosition() {
+            // 지도 시작 시 위치 좌표를 설정
+            return LatLng.from(36.629000, 127.457000);
+        }
+    };
 
-            styles = kakaoMap.getLabelManager().addLabelStyles(styles);
-            LabelStyles orange_style = LabelStyles.from("orange_style_id",
-                    LabelStyle.from(R.drawable.orange_marker).setTextStyles(32, Color.BLACK, 1, Color.GRAY));
-            LabelStyles green_style = LabelStyles.from("green_style_id",
-                    LabelStyle.from(R.drawable.green_marker).setTextStyles(32, Color.BLACK, 1, Color.GRAY));
-            LabelStyles blue_style = LabelStyles.from("blue_style_id",
-                    LabelStyle.from(R.drawable.blue_marker).setTextStyles(32, Color.BLACK, 1, Color.GRAY));
-            LabelStyles gray_style = LabelStyles.from("gray_style_id",
-                    LabelStyle.from(R.drawable.gray_marker).setTextStyles(32, Color.BLACK, 1, Color.GRAY));
+    public void drawMarkers(ServerDataResponse.CampusData data) {
+        // 인증 후 API 가 정상적으로 실행될 때 호출됨
 
-            for (Map<String, Object> location : locations) {
-                int key = 0;
-                for (ServerDataResponse.CampusData.Building b : responses.getBuildings()) {
-                    if ((location.get("building")).toString().equals(b.getName())) {
-                        break;
-                    }
-                    else {
-                        key = key + 1;
-                    }
+        if (kakaoMap == null) return;
+
+        LabelStyles styles = LabelStyles.from("myStyleId",
+                LabelStyle.from(R.drawable.red_marker).setZoomLevel(8),
+                LabelStyle.from(R.drawable.blue_marker).setZoomLevel(11),
+                LabelStyle.from(R.drawable.blue_marker).setTextStyles(32, Color.BLACK, 1, Color.GRAY).setZoomLevel(15));
+
+        styles = kakaoMap.getLabelManager().addLabelStyles(styles);
+        LabelStyles orange_style = LabelStyles.from("orange_style_id",
+                LabelStyle.from(R.drawable.orange_marker).setTextStyles(32, Color.BLACK, 1, Color.GRAY));
+        LabelStyles green_style = LabelStyles.from("green_style_id",
+                LabelStyle.from(R.drawable.green_marker).setTextStyles(32, Color.BLACK, 1, Color.GRAY));
+        LabelStyles blue_style = LabelStyles.from("blue_style_id",
+                LabelStyle.from(R.drawable.blue_marker).setTextStyles(32, Color.BLACK, 1, Color.GRAY));
+        LabelStyles gray_style = LabelStyles.from("gray_style_id",
+                LabelStyle.from(R.drawable.gray_marker).setTextStyles(32, Color.BLACK, 1, Color.GRAY));
+
+        for (Map<String, Object> location : locations) {
+            int key = 0;
+            for (ServerDataResponse.CampusData.Building b : responses.getBuildings()) {
+                if ((location.get("building")).toString().equals(b.getName())) {
+                    break;
                 }
+                else {
+                    key = key + 1;
+                }
+            }
 
-                String operating_status = responses.getBuildings().get(key).getStatus();
+            String operating_status = responses.getBuildings().get(key).getStatus();
+            if (operating_status != null) {
                 switch (operating_status) {
                     case "COOLING_REQUIRED":
                         styles = kakaoMap.getLabelManager().addLabelStyles(orange_style);
                         break;
-                    case "POWER_SAVING_REQUIRED":
+                    case "POWER_SAVING":
                         styles = kakaoMap.getLabelManager().addLabelStyles(green_style);
                         break;
                     case "HEATING_REQUIRED":
@@ -124,23 +149,38 @@ public class CampusMapCallback {
                         styles = kakaoMap.getLabelManager().addLabelStyles(gray_style);
                         break;
                 }
-
-                Label label = kakaoMap.getLabelManager().getLayer().addLabel(LabelOptions.from(setPosition((Double)location.get("lat"), (Double)location.get("lon")))
-                        .setStyles(styles));
+            }
+            else {
+                styles = kakaoMap.getLabelManager().addLabelStyles(gray_style);
             }
 
+            kakaoMap.getLabelManager().getLayer().addLabel(LabelOptions.from(setPosition((Double)location.get("lat"), (Double)location.get("lon")))
+                    .setStyles(styles));
+        }
+    }
 
 
+    public void updateMarkers(ServerDataResponse.CampusData data) {
+        if (this.kakaoMap == null) {
+            Log.w("CampusmapCallback", "지도 아직 로딩 중. 도착 데이터는 임시 보관");
+            this.pendingData = data;
 
+            return; // 아직 지도가 안 켜졌으면 패스
         }
 
-        @Override
-        public LatLng getPosition() {
-            // 지도 시작 시 위치 좌표를 설정
-            return LatLng.from(36.629000, 127.457000);
+        this.responses = data;
+
+        // 1. 기존에 지도에 그려져 있던 마커(라벨)를 싹 지웁니다.
+        LabelLayer layer = kakaoMap.getLabelManager().getLayer();
+        if (layer != null) {
+            layer.removeAll();
         }
-        public LatLng setPosition(double lat, double lon) {
-            return LatLng.from(lat, lon);
-        }
-    };
+
+        // 2. 서버에서 받아온 새 데이터로 마커를 다시 그립니다.
+        drawMarkers(data);
+    }
+
+    public LatLng setPosition(double lat, double lon) {
+        return LatLng.from(lat, lon);
+    }
 }
