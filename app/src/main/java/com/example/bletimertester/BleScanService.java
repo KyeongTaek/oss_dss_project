@@ -82,7 +82,7 @@ public class BleScanService extends Service {
 
     private void initNetworkClient() {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://jsonplaceholder.typicode.com/")
+                .baseUrl("http://168.107.29.35/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
