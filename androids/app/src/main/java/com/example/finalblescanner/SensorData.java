@@ -1,6 +1,6 @@
 package com.example.finalblescanner;
 
-class SpecialSensorData {
+public class SpecialSensorData {
     private String time;
     private String sensorTime;
     private String deviceName;
@@ -80,7 +80,7 @@ class CommonSensorData {
     //숫자 형식 시간을 받는 변수 추가
     private long unixTimestamp;
     //sensordata에 unixtimestamp 추가
-    public CommonSensorData(String time, String sensorTime, long unixTimestamp, String deviceName,
+    public CommonSensorData(String time, String sensorTime, long unixTimestamp, String deviceAddress, String deviceName,
                              float temperature, int eco2, String rawHex, int rssi, String uuid) {
         this.time = time;
         this.sensorTime = sensorTime;

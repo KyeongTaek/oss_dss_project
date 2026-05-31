@@ -26,6 +26,7 @@ public class MainActivity extends Activity {
 
         // ⏰ 권한과 상관없이 기존처럼 백그라운드 서비스(10초 타이머)는 즉시 시동
         Context context = MainActivity.this;
+        BleScanService.initialize(context);
         Intent serviceIntent = new Intent(context, BleScanService.class);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

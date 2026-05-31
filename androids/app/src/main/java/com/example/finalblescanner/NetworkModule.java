@@ -146,14 +146,15 @@ class SpecialTypeDataRequest {
 }
 // 일반 라즈베리파이 센서 포맷
 class CommonTypeDataRequest {
-    @SerializedName("mac")          private String mac;
-    @SerializedName("sensor")       private String sensor;
-    @SerializedName("receiver")     private String receiver;
-    @SerializedName("mode")         private String mode;
-    @SerializedName("temperature")  private double temp;
-    @SerializedName("co2")          private int eco2;
-    @SerializedName("sensing_time") private long timestamp;
-    @SerializedName("rssi")         private int rssi;
+    @SerializedName("mac")          String mac;
+    @SerializedName("sensor")
+                                    String sensor;
+    @SerializedName("receiver")     String receiver;
+    @SerializedName("mode")         String mode;
+    @SerializedName("temperature")  double temp;
+    @SerializedName("co2")          int eco2;
+    @SerializedName("sensing_time") long timestamp;
+    @SerializedName("rssi")         int rssi;
 
     public CommonTypeDataRequest(String mac, String sensor, String receiver,
                                  String mode, double temp, int eco2,
