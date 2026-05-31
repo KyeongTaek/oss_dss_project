@@ -94,6 +94,196 @@ public class TransferManager {
         });
     }
 
+    public void uploadCommonSensorData(SpecialTypeDataRequest data) {
+        if (!NetworkModule.isNetworkAvailable(context)) { //현재 인터넷 연결 여부를 확인
+            NetworkModule.showStatusDialog(
+                    context,
+                    "네트워크 오류",
+                    "인터넷 연결 상태를 확인해주세요."
+            );
+            return;
+        }
+
+        Call<String> call = classApiService.get(mac, sensor, receiver, mode, temperature, co2, sensing_time, rssi);
+
+        // enqueue()를 이용한 비동기 통신 시작(한 번만 보냄!)
+        // 앱 화면을 멈추지 않고 서버 요청을 백그라운드에서 처리
+        call.enqueue(new Callback<String>() {
+
+            //서버가 응답 돌려줬을 때 실행
+            @Override
+            public void onResponse(Call<String> call, Response<String> response) {
+                //응답 코드별 처리(성공, 실패 분기 / 다이얼로그 표시)
+                if (response.isSuccessful()) { // 응답코드가 200~300 사이(성공)
+                    NetworkModule.showStatusDialog(
+                            context,
+                            "성공",
+                            "등록에 성공했습니다"
+                        );
+                }
+                else { // 성공하지 못한 경우
+                    String errorMsg = "";
+                    switch (response.code()) { // 응답코드에 따라
+                        case 400: errorMsg = "잘못된 요청 (데이터 형식을 확인하세요)"; break;
+                        case 404: errorMsg = "서버 경로를 찾을 수 없습니다 (404)"; break;
+                        case 500: errorMsg = "서버 내부 오류 발생 (500)"; break;
+                        default: errorMsg = "통신 에러 (Code: " + response.code() + ")"; break;
+                    }
+
+                    NetworkModule.showStatusDialog(
+                            context,
+                            "에러",
+                            errorMsg
+                    );
+                }
+            }
+
+            //서버와 통신 자체가 실패했을 때 실행함
+            //타임아웃, 인터넷 끊김, 서버 다운 등의 이유
+            @Override
+            public void onFailure(Call<String> call, Throwable t) {
+                //개발자 확인용
+                Log.e(TAG, "요청 실패", t);
+
+                //사용자 내용 다이얼로그
+                NetworkModule.showStatusDialog(
+                        context,
+                        "통신 오류",
+                        "요청 실패: " + t.getMessage()
+                );
+            }
+        });
+    }
+
+    public void triggerRefresh() {
+        if (!NetworkModule.isNetworkAvailable(context)) { //현재 인터넷 연결 여부를 확인
+            NetworkModule.showStatusDialog(
+                    context,
+                    "네트워크 오류",
+                    "인터넷 연결 상태를 확인해주세요."
+            );
+            return;
+        }
+
+        // data를 POST로 서버에 전송하고 응답은 SpecialTypeDataResponse 형태로 받을 것이라 명시.
+        Call<ServerDataResponse> call = analysisApiService.triggerRefresh();
+
+        // enqueue()를 이용한 비동기 통신 시작(한 번만 보냄!)
+        // 앱 화면을 멈추지 않고 서버 요청을 백그라운드에서 처리
+        call.enqueue(new Callback<ServerDataResponse>() {
+
+            //서버가 응답 돌려줬을 때 실행
+            @Override
+            public void onResponse(Call<ServerDataResponse> call, Response<ServerDataResponse> response) {
+                //응답 코드별 처리(성공, 실패 분기 / 다이얼로그 표시)
+                if (response.isSuccessful() && response.body() != null) { // 응답코드가 200~300 사이이고(성공) 응답내용이 비어있지 않다면
+                    ServerDataResponse dataResponse = response.body();
+                    if (dataResponse.getStatusCode() != 200) { // result가 success라면
+                        NetworkModule.showStatusDialog(
+                                context,
+                                String.valueOf(dataResponse.getStatusCode()),
+                                dataResponse.getMessage()
+                        );
+                    }
+                }
+                else { // 성공하지 못한 경우
+                    String errorMsg = "";
+                    switch (response.code()) { // 응답코드에 따라
+                        case 400: errorMsg = "잘못된 요청 (데이터 형식을 확인하세요)"; break;
+                        case 404: errorMsg = "서버 경로를 찾을 수 없습니다 (404)"; break;
+                        case 500: errorMsg = "서버 내부 오류 발생 (500)"; break;
+                        default: errorMsg = "통신 에러 (Code: " + response.code() + ")"; break;
+                    }
+
+                    NetworkModule.showStatusDialog(
+                            context,
+                            "에러",
+                            errorMsg
+                    );
+                }
+            }
+
+            //서버와 통신 자체가 실패했을 때 실행함
+            //타임아웃, 인터넷 끊김, 서버 다운 등의 이유
+            @Override
+            public void onFailure(Call<ServerDataResponse> call, Throwable t) {
+                //개발자 확인용
+                Log.e(TAG, "요청 실패", t);
+
+                //사용자 내용 다이얼로그
+                NetworkModule.showStatusDialog(
+                        context,
+                        "통신 오류",
+                        "요청 실패: " + t.getMessage()
+                );
+            }
+        });
+    }
+
+    public void getCampusStatus() {
+        if (!NetworkModule.isNetworkAvailable(context)) { //현재 인터넷 연결 여부를 확인
+            NetworkModule.showStatusDialog(
+                    context,
+                    "네트워크 오류",
+                    "인터넷 연결 상태를 확인해주세요."
+            );
+            return;
+        }
+
+        Call<ServerDataResponse> call = analysisApiService.get();
+
+        // enqueue()를 이용한 비동기 통신 시작(한 번만 보냄!)
+        // 앱 화면을 멈추지 않고 서버 요청을 백그라운드에서 처리
+        call.enqueue(new Callback<ServerDataResponse>() {
+
+            //서버가 응답 돌려줬을 때 실행
+            @Override
+            public void onResponse(Call<ServerDataResponse> call, Response<ServerDataResponse> response) {
+                //응답 코드별 처리(성공, 실패 분기 / 다이얼로그 표시)
+                if (response.isSuccessful()) { // 응답코드가 200~300 사이(성공)
+                    ServerDataResponse dataResponse = response.body();
+
+                    MainActivity.fillMap(dataResponse.getCampusData());
+                    MainActivity.fillBottomSheet(dataResponse.getCampusData());
+                }
+                else { // 성공하지 못한 경우
+                    String errorMsg = "";
+                    switch (response.code()) { // 응답코드에 따라
+                        case 400: errorMsg = "잘못된 요청 (데이터 형식을 확인하세요)"; break;
+                        case 404: errorMsg = "서버 경로를 찾을 수 없습니다 (404)"; break;
+                        case 500: errorMsg = "서버 내부 오류 발생 (500)"; break;
+                        default: errorMsg = "통신 에러 (Code: " + response.code() + ")"; break;
+                    }
+
+                    MainActivity.fillBottomSheet(null);
+
+                    NetworkModule.showStatusDialog(
+                            context,
+                            "에러",
+                            errorMsg
+                    );
+                }
+            }
+
+            //서버와 통신 자체가 실패했을 때 실행함
+            //타임아웃, 인터넷 끊김, 서버 다운 등의 이유
+            @Override
+            public void onFailure(Call<ServerDataResponse> call, Throwable t) {
+                //개발자 확인용
+                Log.e(TAG, "요청 실패", t);
+
+                MainActivity.fillBottomSheet(null);
+
+                //사용자 내용 다이얼로그
+                NetworkModule.showStatusDialog(
+                        context,
+                        "통신 오류",
+                        "요청 실패: " + t.getMessage()
+                );
+            }
+        });
+    }
+
 }
 
 

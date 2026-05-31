@@ -10,6 +10,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
 
+import java.util.List;
+
 import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -189,13 +191,13 @@ class ServerDataResponse {
     class CampusData {
         @SerializedName("campus_humidity")  private double humid;
         @SerializedName("campus_aqi")       private double aqi;
-        @SerializedName("buildings")        private BuildingList buildings;
+        @SerializedName("buildings")        private List<Building> buildings;
 
         public double getCampusHumidity()   {   return humid; }
         public double getCampusAqi()        {   return aqi; }
-        public BuildingList getBuildings()  {   return buildings; }
+        public List<Building> getBuildings()  {   return buildings; }
 
-        class BuildingList {
+        class Building {
             @SerializedName("building_name")        private String name;
             @SerializedName("building_ext_temp")    private double temp;
             @SerializedName("building_ext_co2")     private double co2;
