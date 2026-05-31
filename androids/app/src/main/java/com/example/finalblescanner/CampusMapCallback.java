@@ -44,6 +44,8 @@ public class CampusMapCallback {
     public final KakaoMapReadyCallback readyCallback = new KakaoMapReadyCallback() {
         @Override
         public void onMapReady(KakaoMap kakaoMap) {
+
+
             kakaoMap.setOnLabelClickListener(new KakaoMap.OnLabelClickListener() {
                 @Override
                 public boolean onLabelClicked(KakaoMap kakaoMap, LabelLayer layer, Label label) {

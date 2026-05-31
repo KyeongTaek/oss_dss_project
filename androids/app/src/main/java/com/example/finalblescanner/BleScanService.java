@@ -204,7 +204,7 @@ public class BleScanService extends Service {
                 co2 = data.getEco2();
 
                 CommonTypeDataRequest request = NetworkModule.fromCommonSensorData(data, deviceId);
-                uploadCommonSensorData(request);
+//                uploadCommonSensorData(request);
             }
             else {
                 SpecialSensorData data = SensorParser.parse(rawData, deviceAddress, deviceName, rssi, uuid, currentLat, currentLon);
@@ -213,7 +213,7 @@ public class BleScanService extends Service {
                 co2 = data.getEco2();
 
                 SpecialTypeDataRequest request = NetworkModule.fromSpecialSensorData(data, deviceId, currentLat, currentLon);
-                uploadSensorData(request);
+//                uploadSensorData(request);
             }
 
             Log.d(TAG, "==================================================");

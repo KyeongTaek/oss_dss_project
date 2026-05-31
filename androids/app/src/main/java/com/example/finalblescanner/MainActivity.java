@@ -85,11 +85,7 @@ public class MainActivity extends AppCompatActivity {
         BleScanService.initialize(context);
         Intent serviceIntent = new Intent(context, BleScanService.class);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent);
-        } else {
-            context.startService(serviceIntent);
-        }
+        context.startForegroundService(serviceIntent);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -99,19 +95,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void initBottomSheet() {
-        Map<String, Object> building_data = (Map)fakeSensorResponse.get("data");
         buildingView = findViewById(R.id.buildingName_TextView);
-        buildingView.setText("선택한 건물: " + ((Map)((List)building_data.get("buildings")).get(0)).get("building_name").toString());
+        buildingView.setText("선택한 건물: " + "-");
         tempView = findViewById(R.id.temp_TextView);
-        tempView.setText(((Map)((List)building_data.get("buildings")).get(0)).get("building_ext_temp").toString());
+        tempView.setText("-");
         co2View = findViewById(R.id.co2_TextView);
-        co2View.setText(((Map)((List)building_data.get("buildings")).get(0)).get("building_ext_co2").toString());
+        co2View.setText("-");
         statusView = findViewById(R.id.status_TextView);
-        statusView.setText(((Map)((List)building_data.get("buildings")).get(0)).get("operating_status").toString());
+        statusView.setText("-");
         humidityView = findViewById(R.id.humidity_TextView);
-        humidityView.setText(building_data.get("campus_humidity").toString());
+        humidityView.setText("-");
         operationView = findViewById(R.id.operation_TextView);
-        operationView.setText(((Map)((List)building_data.get("buildings")).get(0)).get("recommendation_msg").toString());
+        operationView.setText("-");
     }
     public static void fillMap(ServerDataResponse.CampusData data) {
         CampusMapCallback campusMapCallback = new CampusMapCallback(building_loc, data);
