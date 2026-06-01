@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -101,6 +102,11 @@ public class NetworkModule {
                 })
                 .create()
                 .show();
+    }
+
+    public static void showStatusToast(Context cont, String message) {
+        // Toast는 Service Context나 Application Context로도 무조건 정상 작동합니다.
+        Toast.makeText(cont.getApplicationContext(), message, Toast.LENGTH_SHORT).show();
     }
 
     public static SpecialTypeDataRequest fromSpecialSensorData(SpecialSensorData data, String deviceId, double lat, double lon) {

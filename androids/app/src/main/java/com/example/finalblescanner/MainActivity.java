@@ -31,21 +31,45 @@ public class MainActivity extends AppCompatActivity {
     public static MapView mapView;
 
     static List<Map<String, Object>> building_loc = List.of(
-            Map.of(
-                    "building", "법학전문대학원",
-                    "lat", 36.63218943,
-                    "lon", 127.453852
-            ),
-            Map.of(
-                    "building", "CBNU스포츠센터",
-                    "lat", 36.62731552,
-                    "lon", 127.4608165
-            ),
-            Map.of(
-                    "building", "중앙도서관",
-                    "lat", 36.62848293,
-                    "lon", 127.4574258
-            )
+            Map.of("building", "정문", "lat",	36.63245042, "lon", 	127.4529926),
+            Map.of("building", "법학전문대학원", "lat",	36.63218943, "lon", 	127.453852),
+            Map.of("building", "테니스장", "lat",	36.63067437, "lon", 	127.4555739),
+            Map.of("building", "씨비엔유스타", "lat",	36.63045836, "lon", 	127.4562121),
+            Map.of("building", "쿱스켓 대학본부점", "lat",	36.63046548, "lon", 	127.4559997),
+            Map.of("building", "산학협력관", "lat",	36.63239667, "lon", 	127.4552732),
+            Map.of("building", "국제교류본부 2호관", "lat",	36.63215137, "lon", 	127.4557972),
+            Map.of("building", "고시원", "lat",	36.63242647, "lon", 	127.4554947),
+            Map.of("building", "형설관", "lat",	36.63283197, "lon", 	127.4559667),
+            Map.of("building", "보육교사교육원", "lat",	36.63307883, "lon", 	127.4564512),
+            Map.of("building", "국제교류본부 3호관", "lat",	36.63326399, "lon", 	127.4570449),
+            Map.of("building", "대학본부", "lat",	36.62992867, "lon", 	127.454514),
+            Map.of("building", "공동실험실습관", "lat",	36.629306, "lon", 	127.4552215),
+            Map.of("building", "중앙도서관", "lat",	36.62848293, "lon", 	127.4574258),
+            Map.of("building", "경영학관", "lat",	36.63006758, "lon", 	127.4568359),
+            Map.of("building", "인문사회관", "lat",	36.63099512, "lon", 	127.4565283),
+            Map.of("building", "사회과학대학 본관", "lat",	36.62939334, "lon", 	127.4578248),
+            Map.of("building", "인문대학 본관", "lat",	36.63012198, "lon", 	127.4586251),
+            Map.of("building", "미술관", "lat",	36.63073274, "lon", 	127.4572737),
+            Map.of("building", "미술과", "lat",	36.63076411, "lon", 	127.4584903),
+            Map.of("building", "개성재 관리동", "lat",	36.63153193, "lon", 	127.4575378),
+            Map.of("building", "개성재 진리관", "lat",	36.63104797, "lon", 	127.4577853),
+            Map.of("building", "개성재 정의관", "lat",	36.6312015, "lon", 	127.4581664),
+            Map.of("building", "개성재 개척관", "lat",	36.63148193, "lon", 	127.4583537),
+            Map.of("building", "계영원", "lat",	36.63187029, "lon", 	127.4585941),
+            Map.of("building", "법학관", "lat",	36.63094825, "lon", 	127.4593456),
+            Map.of("building", "역사관", "lat",	36.63054701, "lon", 	127.4598743),
+            Map.of("building", "생활과학대학", "lat",	36.63041306, "lon", 	127.4607243),
+            Map.of("building", "어린이집", "lat",	36.63072814, "lon", 	127.4603393),
+            Map.of("building", "직장어린이집", "lat",	36.6303422, "lon", 	127.4608715),
+            Map.of("building", "은하수식당", "lat",	36.6299154, "lon", 	127.4602179),
+            Map.of("building", "사범대학 실험동", "lat",	36.62905034, "lon", 	127.4607788),
+            Map.of("building", "사범대학 강의동", "lat",	36.62855848, "lon", 	127.4602705),
+            Map.of("building", "개신문화관", "lat",	36.62819423, "lon", 	127.4593874),
+            Map.of("building", "제1학생회관", "lat",	36.62758723, "lon", 	127.4588248),
+            Map.of("building", "NH관", "lat",	36.62727179, "lon", 	127.4593059),
+            Map.of("building", "CBNU스포츠센터", "lat",	36.62731552, "lon", 	127.4608165),
+            Map.of("building", "보조체육관", "lat",	36.62687031, "lon", 	127.4624562),
+            Map.of("building", "123 학군단", "lat",	36.62705336, "lon", 	127.4617284)
     );
 
     private static final int PERMISSION_REQUEST_CODE = 1000;

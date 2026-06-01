@@ -128,24 +128,13 @@ public class BleScanService extends Service {
 
         Log.d(TAG, "⏰ [10초 주기 완료] 라즈베리파이 스캔 및 서버 전송 루프 가동...");
 
-        List<String> macList = new ArrayList<>();
-        macList.add("D8:3A:DD:79:8E:BF");
-        macList.add("B8:27:EB:D3:40:06");
-        macList.add("88:A2:9E:9B:5E:6A");
-        macList.add("D8:3A:DD:79:8F:80");
-        macList.add("D8:3A:DD:C1:88:BD");
-        macList.add("DC:A6:32:C5:DD:57");
-
         UUID serviceUUID = UUID.fromString("0000181A-0000-1000-8000-00805F9B34FB");
 
         List<ScanFilter> filters = new ArrayList<>();
-        for (String address : macList) {
-            ScanFilter filter = new ScanFilter.Builder()
-                    .setDeviceAddress(address)
-                    .setServiceUuid(new ParcelUuid(serviceUUID))
-                    .build();
-            filters.add(filter);
-        }
+        ScanFilter filter = new ScanFilter.Builder()
+                .setServiceUuid(new ParcelUuid(serviceUUID))
+                .build();
+        filters.add(filter);
 
         ScanSettings settings = new ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
@@ -204,7 +193,7 @@ public class BleScanService extends Service {
                 co2 = data.getEco2();
 
                 CommonTypeDataRequest request = NetworkModule.fromCommonSensorData(data, deviceId);
-//                uploadCommonSensorData(request);
+                uploadCommonSensorData(request);
             }
             else {
                 SpecialSensorData data = SensorParser.parse(rawData, deviceAddress, deviceName, rssi, uuid, currentLat, currentLon);
@@ -213,7 +202,7 @@ public class BleScanService extends Service {
                 co2 = data.getEco2();
 
                 SpecialTypeDataRequest request = NetworkModule.fromSpecialSensorData(data, deviceId, currentLat, currentLon);
-//                uploadSensorData(request);
+                uploadSensorData(request);
             }
 
             Log.d(TAG, "==================================================");
@@ -280,11 +269,12 @@ public class BleScanService extends Service {
 
     public void uploadSensorData(SpecialTypeDataRequest data) {
         if (!NetworkModule.isNetworkAvailable(context)) { //현재 인터넷 연결 여부를 확인
-            NetworkModule.showStatusDialog(
-                    context,
-                    "네트워크 오류",
-                    "인터넷 연결 상태를 확인해주세요."
-            );
+//            NetworkModule.showStatusDialog(
+//                    context,
+//                    "네트워크 오류",
+//                    "인터넷 연결 상태를 확인해주세요."
+//            );
+            NetworkModule.showStatusToast(context.getApplicationContext(), "네트워크 연결을 확인해주세요");
             return;
         }
 
@@ -301,12 +291,13 @@ public class BleScanService extends Service {
                 //응답 코드별 처리(성공, 실패 분기 / 다이얼로그 표시)
                 if (response.isSuccessful() && response.body() != null) { // 응답코드가 200~300 사이이고(성공) 응답내용이 비어있지 않다면
                     SpecialTypeDataResponse dataResponse = response.body();
-                    if (!"Success".equals(dataResponse.getResult())) { // result가 success라면
-                        NetworkModule.showStatusDialog(
-                                context,
-                                dataResponse.getResult(),
-                                dataResponse.getMessage()
-                        );
+                    if (!"Success".equals(dataResponse.getResult())) { // result가 success가 아니라면
+//                        NetworkModule.showStatusDialog(
+//                                context,
+//                                dataResponse.getResult(),
+//                                dataResponse.getMessage()
+//                        );
+                        NetworkModule.showStatusToast(context.getApplicationContext(), dataResponse.getMessage());
                     }
                 }
                 else { // 성공하지 못한 경우
@@ -318,11 +309,12 @@ public class BleScanService extends Service {
                         default: errorMsg = "통신 에러 (Code: " + response.code() + ")"; break;
                     }
 
-                    NetworkModule.showStatusDialog(
-                            context,
-                            "에러",
-                            errorMsg
-                    );
+//                    NetworkModule.showStatusDialog(
+//                            context,
+//                            "에러",
+//                            errorMsg
+//                    );
+                    NetworkModule.showStatusToast(context.getApplicationContext(), errorMsg);
                 }
             }
 
@@ -334,22 +326,24 @@ public class BleScanService extends Service {
                 Log.e(TAG, "요청 실패", t);
 
                 //사용자 내용 다이얼로그
-                NetworkModule.showStatusDialog(
-                        context,
-                        "통신 오류",
-                        "요청 실패: " + t.getMessage()
-                );
+//                NetworkModule.showStatusDialog(
+//                        context,
+//                        "통신 오류",
+//                        "요청 실패: " + t.getMessage()
+//                );
+                NetworkModule.showStatusToast(context.getApplicationContext(), "요청 실패: " + t.getMessage());
             }
         });
     }
 
     public void uploadCommonSensorData(CommonTypeDataRequest data) {
         if (!NetworkModule.isNetworkAvailable(context)) { //현재 인터넷 연결 여부를 확인
-            NetworkModule.showStatusDialog(
-                    context,
-                    "네트워크 오류",
-                    "인터넷 연결 상태를 확인해주세요."
-            );
+//            NetworkModule.showStatusDialog(
+//                    context,
+//                    "네트워크 오류",
+//                    "인터넷 연결 상태를 확인해주세요."
+//            );
+            NetworkModule.showStatusToast(context.getApplicationContext(), "네트워크 연결을 확인해주세요");
             return;
         }
 
@@ -364,11 +358,12 @@ public class BleScanService extends Service {
             public void onResponse(Call<String> call, Response<String> response) {
                 //응답 코드별 처리(성공, 실패 분기 / 다이얼로그 표시)
                 if (response.isSuccessful()) { // 응답코드가 200~300 사이(성공)
-                    NetworkModule.showStatusDialog(
-                            context,
-                            "성공",
-                            "등록에 성공했습니다"
-                    );
+//                    NetworkModule.showStatusDialog(
+//                            context,
+//                            "성공",
+//                            "등록에 성공했습니다"
+//                    );
+                    NetworkModule.showStatusToast(context.getApplicationContext(), "등록에 성공했습니다!");
                 }
                 else { // 성공하지 못한 경우
                     String errorMsg = "";
@@ -379,11 +374,12 @@ public class BleScanService extends Service {
                         default: errorMsg = "통신 에러 (Code: " + response.code() + ")"; break;
                     }
 
-                    NetworkModule.showStatusDialog(
-                            context,
-                            "에러",
-                            errorMsg
-                    );
+//                    NetworkModule.showStatusDialog(
+//                            context,
+//                            "에러",
+//                            errorMsg
+//                    );
+                    NetworkModule.showStatusToast(context.getApplicationContext(), errorMsg);
                 }
             }
 
@@ -395,22 +391,24 @@ public class BleScanService extends Service {
                 Log.e(TAG, "요청 실패", t);
 
                 //사용자 내용 다이얼로그
-                NetworkModule.showStatusDialog(
-                        context,
-                        "통신 오류",
-                        "요청 실패: " + t.getMessage()
-                );
+//                NetworkModule.showStatusDialog(
+//                        context,
+//                        "통신 오류",
+//                        "요청 실패: " + t.getMessage()
+//                );
+                NetworkModule.showStatusToast(context.getApplicationContext(), "요청 실패: " + t.getMessage());
             }
         });
     }
 
     public void triggerRefresh() {
         if (!NetworkModule.isNetworkAvailable(context)) { //현재 인터넷 연결 여부를 확인
-            NetworkModule.showStatusDialog(
-                    context,
-                    "네트워크 오류",
-                    "인터넷 연결 상태를 확인해주세요."
-            );
+//            NetworkModule.showStatusDialog(
+//                    context,
+//                    "네트워크 오류",
+//                    "인터넷 연결 상태를 확인해주세요."
+//            );
+            NetworkModule.showStatusToast(context.getApplicationContext(), "네트워크 연결을 확인해주세요");
             return;
         }
 
@@ -428,11 +426,12 @@ public class BleScanService extends Service {
                 if (response.isSuccessful() && response.body() != null) { // 응답코드가 200~300 사이이고(성공) 응답내용이 비어있지 않다면
                     ServerDataResponse dataResponse = response.body();
                     if (dataResponse.getStatusCode() != 200) { // result가 success라면
-                        NetworkModule.showStatusDialog(
-                                context,
-                                String.valueOf(dataResponse.getStatusCode()),
-                                dataResponse.getMessage()
-                        );
+//                        NetworkModule.showStatusDialog(
+//                                context,
+//                                String.valueOf(dataResponse.getStatusCode()),
+//                                dataResponse.getMessage()
+//                        );
+                        NetworkModule.showStatusToast(context.getApplicationContext(), dataResponse.getMessage());
                     }
                 }
                 else { // 성공하지 못한 경우
@@ -444,11 +443,12 @@ public class BleScanService extends Service {
                         default: errorMsg = "통신 에러 (Code: " + response.code() + ")"; break;
                     }
 
-                    NetworkModule.showStatusDialog(
-                            context,
-                            "에러",
-                            errorMsg
-                    );
+//                    NetworkModule.showStatusDialog(
+//                            context,
+//                            "에러",
+//                            errorMsg
+//                    );
+                    NetworkModule.showStatusToast(context.getApplicationContext(), errorMsg);
                 }
             }
 
@@ -460,22 +460,24 @@ public class BleScanService extends Service {
                 Log.e(TAG, "요청 실패", t);
 
                 //사용자 내용 다이얼로그
-                NetworkModule.showStatusDialog(
-                        context,
-                        "통신 오류",
-                        "요청 실패: " + t.getMessage()
-                );
+//                NetworkModule.showStatusDialog(
+//                        context,
+//                        "통신 오류",
+//                        "요청 실패: " + t.getMessage()
+//                );
+                NetworkModule.showStatusToast(context.getApplicationContext(), "요청 실패: " + t.getMessage());
             }
         });
     }
 
     public static void getCampusStatus() {
         if (!NetworkModule.isNetworkAvailable(context)) { //현재 인터넷 연결 여부를 확인
-            NetworkModule.showStatusDialog(
-                    context,
-                    "네트워크 오류",
-                    "인터넷 연결 상태를 확인해주세요."
-            );
+//            NetworkModule.showStatusDialog(
+//                    context,
+//                    "네트워크 오류",
+//                    "인터넷 연결 상태를 확인해주세요."
+//            );
+            NetworkModule.showStatusToast(context.getApplicationContext(), "네트워크 연결을 확인해주세요");
             return;
         }
 
@@ -506,11 +508,12 @@ public class BleScanService extends Service {
 
                     MainActivity.fillBottomSheet(null);
 
-                    NetworkModule.showStatusDialog(
-                            context,
-                            "에러",
-                            errorMsg
-                    );
+//                    NetworkModule.showStatusDialog(
+//                            context,
+//                            "에러",
+//                            errorMsg
+//                    );
+                    NetworkModule.showStatusToast(context.getApplicationContext(), errorMsg);
                 }
             }
 
@@ -524,11 +527,12 @@ public class BleScanService extends Service {
                 MainActivity.fillBottomSheet(null);
 
                 //사용자 내용 다이얼로그
-                NetworkModule.showStatusDialog(
-                        context,
-                        "통신 오류",
-                        "요청 실패: " + t.getMessage()
-                );
+//                NetworkModule.showStatusDialog(
+//                        context,
+//                        "통신 오류",
+//                        "요청 실패: " + t.getMessage()
+//                );
+                NetworkModule.showStatusToast(context.getApplicationContext(), "요청 실패: " + t.getMessage());
             }
         });
     }
