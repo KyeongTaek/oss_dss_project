@@ -260,10 +260,10 @@ interface ClassApiService {
 // 분석 서버로의 요청
 interface AnalysisApiService {
     // api/campus/refresh에 대한 POST
-    @POST("api/campus/refresh/")
+    @POST("api/campus/refresh")
     Call<ServerDataResponse> triggerRefresh();
 
     // api/campus/status에 대한 GET
-    @GET("api/campus/status/")
+    @GET("api/campus/status")
     Call<ServerDataResponse> get();
 }

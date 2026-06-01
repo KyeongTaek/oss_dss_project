@@ -298,6 +298,11 @@ public class BleScanService extends Service {
 //                                dataResponse.getMessage()
 //                        );
                         NetworkModule.showStatusToast(context.getApplicationContext(), dataResponse.getMessage());
+                        Log.e(TAG, "❌ [수업 서버 연결 실패] 특수 업로드 전송 실패.");
+                    }
+                    else {
+                        Log.i(TAG, "🔥 [수업 서버 연동 성공] POST /sensor/opensrc/upload 완료! (응답코드: " + response.code() + ")");
+                        triggerRefresh();
                     }
                 }
                 else { // 성공하지 못한 경우
@@ -364,6 +369,8 @@ public class BleScanService extends Service {
 //                            "등록에 성공했습니다"
 //                    );
                     NetworkModule.showStatusToast(context.getApplicationContext(), "등록에 성공했습니다!");
+                    Log.i(TAG, "🔥 [수업 서버 연동 성공] GET /sensor/sensing 완료! (응답코드: " + response.code() + ")");
+                    triggerRefresh();
                 }
                 else { // 성공하지 못한 경우
                     String errorMsg = "";
@@ -425,13 +432,15 @@ public class BleScanService extends Service {
                 //응답 코드별 처리(성공, 실패 분기 / 다이얼로그 표시)
                 if (response.isSuccessful() && response.body() != null) { // 응답코드가 200~300 사이이고(성공) 응답내용이 비어있지 않다면
                     ServerDataResponse dataResponse = response.body();
-                    if (dataResponse.getStatusCode() != 200) { // result가 success라면
+                    if (dataResponse.getStatusCode() == 200) { // result가 success라면
 //                        NetworkModule.showStatusDialog(
 //                                context,
 //                                String.valueOf(dataResponse.getStatusCode()),
 //                                dataResponse.getMessage()
 //                        );
                         NetworkModule.showStatusToast(context.getApplicationContext(), dataResponse.getMessage());
+                        Log.i(TAG, "🔥 [분석 서버 연동 성공] POST /api/campus/refresh 완료! (응답코드: " + response.code() + ")");
+                        Log.i(TAG, dataResponse.getMessage());
                     }
                 }
                 else { // 성공하지 못한 경우
