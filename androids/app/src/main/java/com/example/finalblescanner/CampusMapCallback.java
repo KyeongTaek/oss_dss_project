@@ -124,6 +124,7 @@ public class CampusMapCallback {
 
         for (Map<String, Object> location : locations) {
             int key = 0;
+            int max = responses.getBuildings().size();
             for (ServerDataResponse.CampusData.Building b : responses.getBuildings()) {
                 if ((location.get("building")).toString().equals(b.getName())) {
                     break;
@@ -133,26 +134,32 @@ public class CampusMapCallback {
                 }
             }
 
-            String operating_status = responses.getBuildings().get(key).getStatus();
-            if (operating_status != null) {
-                switch (operating_status) {
-                    case "COOLING_REQUIRED":
-                        styles = kakaoMap.getLabelManager().addLabelStyles(orange_style);
-                        break;
-                    case "POWER_SAVING":
-                        styles = kakaoMap.getLabelManager().addLabelStyles(green_style);
-                        break;
-                    case "HEATING_REQUIRED":
-                        styles = kakaoMap.getLabelManager().addLabelStyles(blue_style);
-                        break;
-                    default:
-                        styles = kakaoMap.getLabelManager().addLabelStyles(gray_style);
-                        break;
-                }
-            }
-            else {
+            if(key == max) {
                 styles = kakaoMap.getLabelManager().addLabelStyles(gray_style);
             }
+            else {
+                String operating_status = responses.getBuildings().get(key).getStatus();
+                if (operating_status != null) {
+                    switch (operating_status) {
+                        case "COOLING_REQUIRED":
+                            styles = kakaoMap.getLabelManager().addLabelStyles(orange_style);
+                            break;
+                        case "POWER_SAVING":
+                            styles = kakaoMap.getLabelManager().addLabelStyles(green_style);
+                            break;
+                        case "HEATING_REQUIRED":
+                            styles = kakaoMap.getLabelManager().addLabelStyles(blue_style);
+                            break;
+                        default:
+                            styles = kakaoMap.getLabelManager().addLabelStyles(gray_style);
+                            break;
+                    }
+                }
+                else {
+                    styles = kakaoMap.getLabelManager().addLabelStyles(gray_style);
+                }
+            }
+
 
             kakaoMap.getLabelManager().getLayer().addLabel(LabelOptions.from(setPosition((Double)location.get("lat"), (Double)location.get("lon")))
                     .setStyles(styles));
