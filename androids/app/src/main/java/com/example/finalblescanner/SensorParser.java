@@ -69,36 +69,27 @@ public class SensorParser {
                 temperature, humidity, aqi, tvoc, eco2, lat, lon, rawHex, rssi, uuid);
     }
 
+    //규격: co2(2) + temp(2) + timestamp(4) = 총 8 Bytes
     public static CommonSensorData parse(byte[] rawData, String deviceAddress, String deviceName,
                                           int rssi, String uuid) {
-        if (rawData == null || rawData.length < 13) { return null; }
+        if (rawData == null || rawData.length < 8) { return null; }
         if (deviceName == null) { deviceName = "unknown"; }
         if (uuid == null) { uuid = "unknown"; }
 
         String apptime = getCurrentTime();
-        long unixTime = littleEndianToUInt32(rawData[9], rawData[10], rawData[11], rawData[12]);
+        long unixTime = littleEndianToUInt32(rawData[4], rawData[5], rawData[6], rawData[7]);
         String sensorTime = formatSensorTime(unixTime);
 
         String rawHex = bytesToHex(rawData);
 
-        // 순서 1. 온도 (Temp): short (2B), 규칙: / 100.0
-        int tempRaw = littleEndianToUInt16(rawData[0], rawData[1]);
-        float temperature = tempRaw / 100.0f;
+        // 순서 1. 이산화탄소 (co2): ushort (2B), 규칙: & 0xFFFF
+        int co2 = littleEndianToUInt16(rawData[0], rawData[1]);
 
-        // 순서 2. 습도 (Humidity): short (2B), 규칙: / 100.0
-        int humRaw = littleEndianToUInt16(rawData[2], rawData[3]);
-        float humidity = humRaw / 100.0f;
-
-        // 순서 3. 공기질 (AQI): byte (1B), 규칙: 그대로 읽음
-        int aqi = rawData[4] & 0xFF;
-
-        // 순서 4. 가스 (TVOC): ushort (2B), 규칙: & 0xFFFF
-        int tvoc = littleEndianToUInt16(rawData[5], rawData[6]);
-
-        // 순서 5. 이산화탄소 (eCO2): ushort (2B), 규칙: & 0xFFFF
-        int eco2 = littleEndianToUInt16(rawData[7], rawData[8]);
+        // 순서 2. 온도 (temp): short (2B), 규칙: / 100.0
+        int tempRaw = littleEndianToUInt16(rawData[2], rawData[3]);
+        float temp = tempRaw / 100.0f;
 
         return new CommonSensorData(apptime, sensorTime,unixTime, deviceAddress, deviceName,
-                temperature, eco2, rawHex, rssi, uuid);
+                temp, co2, rawHex, rssi, uuid);
     }
 }
