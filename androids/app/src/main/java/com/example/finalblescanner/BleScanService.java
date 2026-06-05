@@ -178,21 +178,28 @@ public class BleScanService extends Service {
             if (deviceName == null) deviceName = "RPi_Sensor";
 
             byte[] rawData = null;
+            long timestampNano = 0;
             if (result.getScanRecord() != null) {
                 rawData = result.getScanRecord().getServiceData(ParcelUuid.fromString(uuid));
+                timestampNano = result.getTimestampNanos();
             }
+
+
 
             double temp;
             int co2;
 
             String deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID); // 기기 id 가져옴
             if(deviceName.contains("sensor")) { // 일반 센서
-                CommonSensorData data = SensorParser.parse(rawData, deviceAddress, deviceName, rssi, uuid);
+                CommonSensorData data = SensorParser.parse(rawData, timestampNano, deviceAddress, deviceName, rssi, uuid);
 
                 temp = data.getTemperature();
                 co2 = data.getEco2();
 
                 CommonTypeDataRequest request = NetworkModule.fromCommonSensorData(data, deviceId);
+
+                Log.i(TAG, "[scan 성공] commontype입니다!");
+
                 uploadCommonSensorData(request);
             }
             else {
@@ -202,6 +209,9 @@ public class BleScanService extends Service {
                 co2 = data.getEco2();
 
                 SpecialTypeDataRequest request = NetworkModule.fromSpecialSensorData(data, deviceId, currentLat, currentLon);
+
+                Log.i(TAG, "[scan 성공] specialtype입니다!");
+
                 uploadSensorData(request);
             }
 

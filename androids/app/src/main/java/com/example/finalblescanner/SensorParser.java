@@ -1,5 +1,7 @@
 package com.example.finalblescanner;
 
+import android.os.SystemClock;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -69,16 +71,30 @@ public class SensorParser {
                 temperature, humidity, aqi, tvoc, eco2, lat, lon, rawHex, rssi, uuid);
     }
 
-    //규격: co2(2) + temp(2) + timestamp(4) = 총 8 Bytes
-    public static CommonSensorData parse(byte[] rawData, String deviceAddress, String deviceName,
+    //규격: co2(2) + temp(2) (+ timestamp(4)) = 총 4 Bytes
+    public static CommonSensorData parse(byte[] rawData, long timestampNano, String deviceAddress, String deviceName,
                                           int rssi, String uuid) {
-        if (rawData == null || rawData.length < 8) { return null; }
+        if (rawData == null || rawData.length < 4) { return null; }
         if (deviceName == null) { deviceName = "unknown"; }
         if (uuid == null) { uuid = "unknown"; }
 
-        String apptime = getCurrentTime();
-        long unixTime = littleEndianToUInt32(rawData[4], rawData[5], rawData[6], rawData[7]);
-        String sensorTime = formatSensorTime(unixTime);
+        // 현재 실제 시각(ms)
+        long currentTimeMillis = System.currentTimeMillis();
+        // 휴대폰 부팅 이후 시간(ms로 변환)
+        long currentElapsedMillis = SystemClock.elapsedRealtimeNanos() / 1000000;
+        // 스캔 시점의 부팅 이후 시간(ms로 변환)
+        long scanElapsedMillis = timestampNano / 1000000;
+        // 실제 시각 계산
+        long actualScanTimeMillis = currentTimeMillis - (currentElapsedMillis - scanElapsedMillis);
+        // 최종 unix timestamp 생성
+        long unixTime = actualScanTimeMillis / 1000;
+
+//        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+//        String realtime = dateFormat.format(new Date(actualScanTimeMillis));
+
+//        String apptime = getCurrentTime();
+//        long unixTime = littleEndianToUInt32(rawData[4], rawData[5], rawData[6], rawData[7]);
+//        String sensorTime = formatSensorTime(unixTime);
 
         String rawHex = bytesToHex(rawData);
 
@@ -89,7 +105,7 @@ public class SensorParser {
         int tempRaw = littleEndianToUInt16(rawData[2], rawData[3]);
         float temp = tempRaw / 100.0f;
 
-        return new CommonSensorData(apptime, sensorTime,unixTime, deviceAddress, deviceName,
+        return new CommonSensorData(unixTime, deviceAddress, deviceName,
                 temp, co2, rawHex, rssi, uuid);
     }
 }
