@@ -67,13 +67,25 @@ public class CampusMapCallback {
                     double lon = labelPosition.getLongitude();
 
                     int key = 0;
+                    double epsilon = 0.000001; // 1m 이내 오차는 같은 건물로 봄
                     for (Map<String, Object> location : locations) {
-                        if((double)location.get("lat") == lat && (double)location.get("lon") == lon) {
+                        double locLat = (double)location.get("lat");
+                        double locLon = (double)location.get("lon");
+
+                        // 값의 차이의 절대값이 오차 범위보다 작은지 비교
+                        if (Math.abs(locLat - lat) < epsilon && Math.abs(locLon - lon) < epsilon) {
                             break;
                         }
                         else {
                             key = key + 1;
                         }
+                    }
+
+                    if (key >= locations.size()) {
+                        Log.e("CampusMapCallback", "클릭한 마커의 좌표와 일치하는 건물을 찾을 수 없습니다.");
+                        fillBottomSheet(null);
+
+                        return true;
                     }
 
                     String building_name = locations.get(key).get("building").toString();
@@ -86,6 +98,13 @@ public class CampusMapCallback {
                         else {
                             key = key + 1;
                         }
+                    }
+
+                    if (key >= responses.getBuildings().size()) {
+                        Log.e("CampusMapCallback", "클릭한 마커의 건물 정보는 서버에 없었습니다");
+                        fillBottomSheet(null);
+
+                        return true;
                     }
                     ServerDataResponse.CampusData.Building building = responses.getBuildings().get(key);
                     fillBottomSheet(building, responses.getCampusHumidity());
