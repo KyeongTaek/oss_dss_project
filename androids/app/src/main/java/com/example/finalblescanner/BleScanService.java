@@ -362,7 +362,7 @@ public class BleScanService extends Service {
             return;
         }
 
-        Call<String> call = classApiService.get(data.mac, data.sensor, data.receiver, data.mode, data.temp, data.eco2, data.timestamp, data.rssi);
+        Call<String> call = classApiService.get(data.mac, data.sensor, data.sender, data.mode, data.temp, data.eco2, data.timestamp, data.rssi);
 
         // enqueue()를 이용한 비동기 통신 시작(한 번만 보냄!)
         // 앱 화면을 멈추지 않고 서버 요청을 백그라운드에서 처리

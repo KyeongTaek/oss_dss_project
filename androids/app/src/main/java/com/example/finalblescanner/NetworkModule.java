@@ -171,19 +171,18 @@ class SpecialTypeDataRequest {
 // 일반 라즈베리파이 센서 포맷
 class CommonTypeDataRequest {
     @SerializedName("mac")          String mac;
-    @SerializedName("sensor")
-                                    String sensor;
-    @SerializedName("receiver")     String receiver;
+    @SerializedName("sensor")       String sensor;
+    @SerializedName("sender")       String sender;
     @SerializedName("mode")         String mode;
-    @SerializedName("temperature")  double temp;
+    @SerializedName("temp")         double temp;
     @SerializedName("co2")          int eco2;
-    @SerializedName("sensing_time") long timestamp;
+    @SerializedName("time")         long timestamp;
     @SerializedName("rssi")         int rssi;
 
-    public CommonTypeDataRequest(String mac, String sensor, String receiver,
+    public CommonTypeDataRequest(String mac, String sensor, String sender,
                                  String mode, double temp, int eco2,
                                  long timestamp, int rssi) {
-        this.mac = mac; this.sensor = sensor; this.receiver = receiver;
+        this.mac = mac; this.sensor = sensor; this.sender = sender;
         this.mode = mode; this.temp = temp; this.eco2 = eco2;
         this.timestamp = timestamp; this.rssi = rssi;
     }
@@ -245,11 +244,11 @@ interface ClassApiService {
     Call<String> get(
             @Query("mac") String mac,
             @Query("sensor") String sensor,
-            @Query("receiver") String receiver,
+            @Query("sender") String sender,
             @Query("mode") String mode,
-            @Query("temperature") double temperature,
+            @Query("temp") double temperature,
             @Query("co2") int co2,
-            @Query("sensing_time") long sensing_time,
+            @Query("time") long sensing_time,
             @Query("rssi") int rssi
     );
 
