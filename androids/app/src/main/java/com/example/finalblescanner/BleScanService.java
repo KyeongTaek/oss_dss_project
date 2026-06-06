@@ -37,8 +37,8 @@ import retrofit2.Response;
 public class BleScanService extends Service {
 
     private static final String TAG = "BleScanService";
-    private static final String CHANNEL_ID = "ble_test_channel";
-    private static final int NOTIFICATION_ID = 999;
+    private static final String CHANNEL_ID = "ble_test_channel_fixed";
+    private static final int NOTIFICATION_ID = 1234;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private boolean isRunning = false;
@@ -215,6 +215,8 @@ public class BleScanService extends Service {
                 uploadSensorData(request);
             }
 
+            NetworkModule.showStatusToast(context.getApplicationContext(), "감지된 장치 : " + deviceName);
+
             Log.d(TAG, "==================================================");
             Log.d(TAG, "🎯 [라즈베리파이 센서 장치 감지!!]");
             Log.d(TAG, "  ▶ 장치 이름 : " + deviceName);
@@ -237,6 +239,7 @@ public class BleScanService extends Service {
         public void onScanFailed(int errorCode) {
             super.onScanFailed(errorCode);
             Log.e(TAG, "⚠ 타겟 스캔 실패 코드: " + errorCode);
+            NetworkModule.showStatusToast(context.getApplicationContext(), "⚠ 타겟 스캔 실패 코드: " + errorCode);
         }
     };
 
@@ -312,6 +315,7 @@ public class BleScanService extends Service {
                     }
                     else {
                         Log.i(TAG, "🔥 [수업 서버 연동 성공] POST /sensor/opensrc/upload 완료! (응답코드: " + response.code() + ")");
+                        NetworkModule.showStatusToast(context.getApplicationContext(), "POST /sensor/opensrc/upload (" + response.code() + ")");
                         triggerRefresh();
                     }
                 }
@@ -448,9 +452,16 @@ public class BleScanService extends Service {
 //                                String.valueOf(dataResponse.getStatusCode()),
 //                                dataResponse.getMessage()
 //                        );
-                        NetworkModule.showStatusToast(context.getApplicationContext(), dataResponse.getMessage());
+                        NetworkModule.showStatusToast(context.getApplicationContext(), "POST /api/campus/refresh (" + response.code() + ")");
                         Log.i(TAG, "🔥 [분석 서버 연동 성공] POST /api/campus/refresh 완료! (응답코드: " + response.code() + ")");
                         Log.i(TAG, dataResponse.getMessage());
+
+                        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                getCampusStatus();
+                            }
+                        }, 800);
                     }
                 }
                 else { // 성공하지 못한 경우
@@ -513,8 +524,23 @@ public class BleScanService extends Service {
                 if (response.isSuccessful()) { // 응답코드가 200~300 사이(성공)
                     ServerDataResponse dataResponse = response.body();
 
-                    MainActivity.fillMap(dataResponse.getCampusData());
-                    MainActivity.fillBottomSheet(dataResponse.getCampusData());
+                    Log.i(TAG, "🔥 [분석 서버 연동 성공] GET /api/campus/status 완료! (응답코드: " + response.code() + ")");
+                    Log.i(TAG, dataResponse.getMessage());
+
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (dataResponse.getCampusData() != null) {
+                                // 메인 화면의 지도와 바텀시트 갱신 메서드 실행
+                                MainActivity.fillMap(dataResponse.getCampusData());
+                                MainActivity.fillBottomSheet(dataResponse.getCampusData());
+                                Log.d(TAG, "🎯 카카오맵 v2 마커 동적 반영 완료!");
+                            }
+                        }
+                    });
+
+                    NetworkModule.showStatusToast(context.getApplicationContext(), "GET /api/campus/status (" + response.code() + ")");
+
                 }
                 else { // 성공하지 못한 경우
                     String errorMsg = "";
@@ -524,8 +550,11 @@ public class BleScanService extends Service {
                         case 500: errorMsg = "서버 내부 오류 발생 (500)"; break;
                         default: errorMsg = "통신 에러 (Code: " + response.code() + ")"; break;
                     }
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() {MainActivity.fillBottomSheet(null);}
+                    });
 
-                    MainActivity.fillBottomSheet(null);
 
 //                    NetworkModule.showStatusDialog(
 //                            context,
@@ -561,14 +590,14 @@ public class BleScanService extends Service {
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
-                    CHANNEL_ID, "통신 연동 서비스", NotificationManager.IMPORTANCE_LOW
+                    CHANNEL_ID, "통신 연동 서비스 v2", NotificationManager.IMPORTANCE_LOW
             );
             if (manager != null) manager.createNotificationChannel(channel);
         }
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("BLE + Retrofit 통합 테스트")
-                .setContentText("라즈베리파이 센서 수집 및 가상 서버 전송 가동 중")
-                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle("실시간 캠퍼스 센서 수집")
+                .setContentText("라즈베리파이 데이터를 자체 분석 서버로 전송 중")
+                .setSmallIcon(R.mipmap.ic_launcher)
                 .setOngoing(true)
                 .build();
 

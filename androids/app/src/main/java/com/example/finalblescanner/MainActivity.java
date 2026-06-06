@@ -227,7 +227,16 @@ public class MainActivity extends AppCompatActivity {
      */
     private void checkAndRequestRuntimePermissions() {
         if (!hasAllPermissions()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ActivityCompat.requestPermissions(this, new String[]{
+                        Manifest.permission.BLUETOOTH_SCAN,
+                        Manifest.permission.BLUETOOTH_CONNECT,
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.POST_NOTIFICATIONS
+                }, PERMISSION_REQUEST_CODE);
+            }
+            else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 // Android 12 이상: 블루투스 스캔, 커넥트, 위치 권한 필수 요청
                 ActivityCompat.requestPermissions(this, new String[]{
                         Manifest.permission.BLUETOOTH_SCAN,
@@ -249,7 +258,13 @@ public class MainActivity extends AppCompatActivity {
      * 현재 권한이 부여되어 있는지 확인하는 함수
      */
     private boolean hasAllPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+            return checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
+                    checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED &&
+                    checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                    checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+        }
+        else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             return checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
                     checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED &&
                     checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
