@@ -179,7 +179,6 @@ public class CampusMapCallback {
                 }
             }
 
-
             kakaoMap.getLabelManager().getLayer().addLabel(LabelOptions.from(setPosition((Double)location.get("lat"), (Double)location.get("lon")))
                     .setStyles(styles));
         }

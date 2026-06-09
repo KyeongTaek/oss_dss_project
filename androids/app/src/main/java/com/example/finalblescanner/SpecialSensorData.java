@@ -18,7 +18,6 @@ public class SpecialSensorData {
     private String rawHex;
     private int rssi;
     private String uuid;
-    //숫자 형식 시간을 받는 변수 추가
     private long unixTimestamp;
     //sensordata에 unixtimestamp 추가
     public SpecialSensorData(String time, String sensorTime, long unixTimestamp, String deviceAddress, String deviceName,

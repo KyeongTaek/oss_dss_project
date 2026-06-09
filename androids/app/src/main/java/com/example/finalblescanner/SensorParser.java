@@ -37,7 +37,6 @@ public class SensorParser {
     }
 
     //규격: Temp(2) + Humid(2) + AQI(1) + TVOC(2) + eCO2(2) + Timestamp(4) = 총 13 Bytes
-
     public static SpecialSensorData parse(byte[] rawData, String deviceAddress, String deviceName,
                                    int rssi, String uuid, double lat, double lon) {
         if (rawData == null || rawData.length < 13) { return null; }
@@ -88,13 +87,6 @@ public class SensorParser {
         long actualScanTimeMillis = currentTimeMillis - (currentElapsedMillis - scanElapsedMillis);
         // 최종 unix timestamp 생성
         long unixTime = actualScanTimeMillis / 1000;
-
-//        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-//        String realtime = dateFormat.format(new Date(actualScanTimeMillis));
-
-//        String apptime = getCurrentTime();
-//        long unixTime = littleEndianToUInt32(rawData[4], rawData[5], rawData[6], rawData[7]);
-//        String sensorTime = formatSensorTime(unixTime);
 
         String rawHex = bytesToHex(rawData);
 
